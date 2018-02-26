@@ -32,8 +32,9 @@ class NoteSection(Entity):
         self.scale *= 8
         self.collider = 'box'
 
-        self.notes = list()
         self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
+        self.note_parent = Entity()
+        self.note_parent.parent = self
         # self.position = ()
 
 
@@ -52,7 +53,7 @@ class NoteSection(Entity):
             e = Panel()
             e.parent = self
             e.scale_y = .008
-            e.color = color.color(0, 0, .08)
+            e.color = color.color(0, 0, .12)
             e.origin = (-.5, 0)
             e.y = y / 16
             e.z = -.01
@@ -61,7 +62,7 @@ class NoteSection(Entity):
             e = Panel()
             e.parent = self
             e.scale_x    = .008
-            e.color = color.color(0, 0, .08)
+            e.color = color.color(0, 0, .12)
             e.origin = (0, -.5)
             e.x = x / 4
             e.z = -.01
@@ -84,14 +85,14 @@ class NoteSection(Entity):
         self.playing_notes = list()
         self.sounds = list()
 
-        for n in (self.notes):
+        for note in (self.note_parent.children):
             # self.play_note(note=int(n.y * 8), delay=int(n.x))
             sound = loader.loadSfx("0DefaultPiano_n48.wav")
-            sound.set_play_rate(1 + (n.y * 8 * .05946309436))
+            sound.set_play_rate(1 + (note.y * 8 * .05946309436))
 
             s = Sequence()
-            print('wait:',(n.x * 2))
-            s.append(Wait((n.x * 2)))
+            print('wait:',(note.x * 2))
+            s.append(Wait((note.x * 2)))
             s.append(SoundInterval(sound))
             self.playing_notes.append(s)
 
@@ -101,9 +102,8 @@ class NoteSection(Entity):
 
     def add_note(self, x=0, y=0, strength=1, duration=1/4):
         n = Note()
-        n.reparent_to(self)
-        n.position = (x, y)
-        self.notes.append(n)
+        n.reparent_to(self.note_parent)
+        n.position = (round(x * 16) / 16, round(y * 16) / 16)
         print('added note')
 
 
@@ -112,10 +112,11 @@ class Note(Entity):
         super().__init__()
         self.model = 'quad'
         self.rotation_z = 45
-        self.color = color.lime
+        # self.color = color.clear
         self.scale *= .5
         self.z = -.1
         self.collider = 'box'
+        self.model = None
 
         self.length_indicator = Entity()
         self.length_indicator.parent = self
@@ -123,9 +124,16 @@ class Note(Entity):
         self.length_indicator.origin = (-.5, 0)
         self.length_indicator.rotation_z = -45
         self.length_indicator.color = self.color
-        self.length_indicator.scale_y = .1
+        self.length_indicator.scale_y = .2
         self.length = 0
-        # self.length = 1/8
+
+        self.circle = Quad()
+        self.circle.parent = self
+        self.circle.color = color.lime
+        self.circle.z = -.1
+        self.max_circle_size = self.circle.scale
+        self.strength = .6
+        self.press_time = 0
 
     @property
     def length(self):
@@ -133,13 +141,39 @@ class Note(Entity):
 
     @length.setter
     def length(self, value):
+        value = max(0, value)
         self._length = value
         self.length_indicator.scale_x = value * 10
 
+    @property
+    def strength(self):
+        return self._strength
+
+    @strength.setter
+    def strength(self, value):
+        self._strength = clamp(value, .2, 1)
+        self.circle.scale = Point3(1,1,1) * (self._strength + .2)
+
 
     def update(self, dt):
-        if mouse.left and self.hovered:
-            self.length += dt
+        self.press_time += dt
+        if self.press_time >= 1/16:
+            if mouse.left and self.hovered:
+                self.length += 1/16
+            if mouse.right and self.hovered:
+                self.length -= 1/16
+
+            self.press_time = 0
+
+
+    def input(self, key):
+        if self.hovered:
+            if key == 'scroll up':
+                self.strength += .2
+            elif key == 'scroll down':
+                self.strength -= .2
+
+
 
 
 if __name__ == '__main__':
