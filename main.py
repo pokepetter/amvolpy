@@ -3,9 +3,9 @@ from notesection import NoteSection
 
 app = PandaEditor()
 
-canvas = Panel()
 ns = NoteSection()
-ns.parent = canvas
-ns.scale = ((1 / 10) - .01, (1 / 10) - .01)
+
+
+color.notesection = color.color(0, 0, .08)
 
 app.run()

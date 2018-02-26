@@ -47,9 +47,3 @@ class ScaleChanger(object):
 
 
 sys.modules[__name__] = ScaleChanger()
-
-import scalechanger
-print(0, scalechanger.note_offset(0))
-print(2, scalechanger.note_offset(2))
-print(6, scalechanger.note_offset(6))
-print(35, scalechanger.note_offset(35))
