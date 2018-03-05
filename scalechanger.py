@@ -4,7 +4,7 @@ class ScaleChanger(object):
 
     def __init__(self):
         self.base_note_offset = 0
-        self.scale_rotation = 1
+        self.scale_rotation = 0
 
         self.final_offsets = list()
         self.scale = (2,3,2,1,1,2)
@@ -41,9 +41,15 @@ class ScaleChanger(object):
 
             return offset + self.base_note_offset
 
-        # print("y: " + y + " => " + o + " + " + offset)
+        # print("y:", y)
         return filled_octaves * 12 + offset + self.base_note_offset
 
 
 
 sys.modules[__name__] = ScaleChanger()
+
+if __name__ == '__main__':
+    import scalechanger
+    print(1, scalechanger.note_offset(1))
+    print(5, scalechanger.note_offset(5))
+    print(9, scalechanger.note_offset(9))
