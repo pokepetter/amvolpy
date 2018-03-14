@@ -15,8 +15,15 @@ class Keyboard(Entity):
     def input(self, key):
         for i, k in enumerate(self.keys):
             if key == k:
-                print(scalechanger.note_offset((i + (self.octave_offset * len(scalechanger.scale)))))
-                scalechanger.note_offset((i + (self.octave_offset * len(scalechanger.scale))))
+                # print(scalechanger.note_offset((i + (self.octave_offset * len(scalechanger.scale)))))
+                sound = loader.loadSfx("UoIowaPiano_n24_f5000.wav")
+                note_num = i + (self.octave_offset * len(scalechanger.scale))
+                note_num = scalechanger.note_offset(note_num)
+                distance = 24 - note_num
+                # sound.set_play_rate(1 + ((note_num - 48) * .05946309436))
+                print(distance)
+                sound.set_play_rate(pow(1 / 1.05946309436, distance))
+                sound.play()
 
             if key == k + ' up':
                 # instrumentChanger.StopPlayingNote(i + (octaveOffset * octaveLength))

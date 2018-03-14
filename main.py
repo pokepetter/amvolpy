@@ -1,8 +1,12 @@
 from pandaeditor import*
+from notesheet import NoteSheet
 from notesection import NoteSection
 
-app = PandaEditor()
 
+app = PandaEditor()
+camera.orthographic = True
+camera.fov = 60
+note_sheet = NoteSheet()
 ns = NoteSection()
 
 

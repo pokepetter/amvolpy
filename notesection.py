@@ -88,7 +88,7 @@ class NoteSection(Entity):
         for note in (self.note_parent.children):
             # self.play_note(note=int(n.y * 8), delay=int(n.x))
             sound = loader.loadSfx("0DefaultPiano_n48.wav")
-            sound.set_play_rate(1 + (note.y * 8 * .05946309436))
+            sound.set_play_rate((note.y * 8 * 1.05946309436))
 
             s = Sequence()
             print('wait:',(note.x * 2))

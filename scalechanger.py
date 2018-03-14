@@ -7,7 +7,7 @@ class ScaleChanger(object):
         self.scale_rotation = 0
 
         self.final_offsets = list()
-        self.scale = (2,3,2,1,1,2)
+        self.scale = (2, 2, 1, 2, 2, 3)
 
 
     @property
