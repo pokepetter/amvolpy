@@ -1,24 +1,6 @@
 from pandaeditor import *
 from direct.interval.IntervalGlobal import Sequence, Func, Wait, SoundInterval
-
-class NoteButton(Button):
-
-    def __init__(self):
-        super().__init__()
-        self.color = color.dark_gray
-
-        self.on = False
-
-    # def on_mouse_enter()
-
-    def on_click(self):
-        print('toggle')
-        self.on = not self.on
-
-        if self.on:
-            self.color = color.cyan
-        else:
-            self.color = color.dark_gray
+import snapsettings
 
 class NoteSection(Entity):
 
@@ -103,8 +85,8 @@ class NoteSection(Entity):
     def add_note(self, x=0, y=0, strength=1, duration=1/4):
         n = Note()
         n.reparent_to(self.note_parent)
-        n.position = (round(x * 16) / 16, round(y * 16) / 16)
-        print('added note')
+        n.position = (round(x * snapsettings.position_snap) / snapsettings.position_snap,
+                      round(y * snapsettings.position_snap) / snapsettings.position_snap)
 
 
 class Note(Entity):
@@ -118,22 +100,28 @@ class Note(Entity):
         self.collider = 'box'
         self.model = None
 
-        self.length_indicator = Entity()
-        self.length_indicator.parent = self
-        self.length_indicator.model = 'quad'
-        self.length_indicator.origin = (-.5, 0)
-        self.length_indicator.rotation_z = -45
-        self.length_indicator.color = self.color
-        self.length_indicator.scale_y = .2
-        self.length = 0
+        self.circle = Entity(
+            model = 'circle_16',
+            parent = self,
+            color = color.lime,
+            z = -.1,
+        )
 
-        self.circle = Quad()
-        self.circle.parent = self
-        self.circle.color = color.lime
-        self.circle.z = -.1
-        self.max_circle_size = self.circle.scale
-        self.strength = .6
+        self.length_indicator = Entity(
+            parent = self,
+            model = 'quad',
+            origin = (-.5, 0),
+            rotation_z = -45,
+            color = self.circle.color,
+            scale_y = .2
+        )
+
         self.press_time = 0
+        print('------------------')
+        self.max_circle_size = self.circle.scale
+        self.length = 0
+        self.strength = .6
+
 
     @property
     def length(self):
@@ -152,16 +140,16 @@ class Note(Entity):
     @strength.setter
     def strength(self, value):
         self._strength = clamp(value, .2, 1)
-        self.circle.scale = Point3(1,1,1) * (self._strength + .2)
+        self.circle.scale = Point3(1,1,1) * (self._strength + .2) * .5
 
 
     def update(self, dt):
         self.press_time += dt
-        if self.press_time >= 1/16:
+        if self.press_time >= snapsettings.add_length_snap:
             if mouse.left and self.hovered:
-                self.length += 1/16
+                self.length += snapsettings.add_length_snap
             if mouse.right and self.hovered:
-                self.length -= 1/16
+                self.length -= snapsettings.add_length_snap
 
             self.press_time = 0
 
@@ -172,6 +160,9 @@ class Note(Entity):
                 self.strength += .2
             elif key == 'scroll down':
                 self.strength -= .2
+
+            if key == 'right mouse down':
+                destroy(self)
 
 
 
