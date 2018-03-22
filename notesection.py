@@ -9,9 +9,9 @@ class NoteSection(Entity):
         # self.parent = camera.ui
         self.model = 'quad'
         self.origin = (-.5, -.5)
-        self.position = (-5, -5)
+        # self.position = (-5, -5)
         self.color = color.color(0, 0, .06)
-        self.scale *= 8
+        # self.scale *= 8
         self.collider = 'box'
 
         self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
@@ -170,10 +170,10 @@ class Note(Entity):
 if __name__ == '__main__':
     app = PandaEditor()
     window.color = color.color(0, 0, .12)
-    # camera.fov = 10
     # cursor = Cursor()
     # cursor.color = color.white33
     camera.orthographic = True
+    camera.fov = 10
 
     t = NoteSection()
     app.run()
