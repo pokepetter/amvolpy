@@ -30,6 +30,7 @@ class NoteSection(Entity):
         # self.play_button.y += 1/16
         # self.play_button.x += 1/16
 
+        #GRID
 
         for y in range(16):
             e = Panel()
@@ -86,7 +87,8 @@ class NoteSection(Entity):
         n = Note()
         n.reparent_to(self.note_parent)
         n.position = (round(x * snapsettings.position_snap) / snapsettings.position_snap,
-                      round(y * snapsettings.position_snap) / snapsettings.position_snap)
+                      round(y * snapsettings.position_snap) / snapsettings.position_snap,
+                      -.1)
 
 
 class Note(Entity):
@@ -95,7 +97,7 @@ class Note(Entity):
         self.model = 'quad'
         self.rotation_z = 45
         # self.color = color.clear
-        self.scale *= .5
+        self.scale *= .05
         self.z = -.1
         self.collider = 'box'
         self.model = None
