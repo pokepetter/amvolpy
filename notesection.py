@@ -56,8 +56,6 @@ class NoteSection(Entity):
     def input(self, key):
         if key == 'space':
             self.play()
-        if key == 't':
-            self.test()
 
 
     def on_click(self):
@@ -89,6 +87,14 @@ class NoteSection(Entity):
         n.position = (round(x * snapsettings.position_snap) / snapsettings.position_snap,
                       round(y * snapsettings.position_snap) / snapsettings.position_snap,
                       -.1)
+
+    def play_note(self, number):
+        # todo find closest
+        print('play note:', number)
+        sound = loader.loadSfx("0DefaultPiano_n48.wav")
+        distance = 48 - number
+        sound.set_play_rate(pow(1 / 1.05946309436, distance))
+        sound.play()
 
 
 class Note(Entity):

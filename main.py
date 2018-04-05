@@ -1,15 +1,19 @@
-from pandaeditor import*
+from pandaeditor import *
+from keyboard import Keyboard
 from notesheet import NoteSheet
 from notesection import NoteSection
 
 color.notesection = color.color(0, 0, .08)
-
-app = PandaEditor()
-camera.orthographic = True
-camera.fov = 60
-note_sheet = NoteSheet()
-
-ns = NoteSection()
+if __name__ == '__main__':
+    app = PandaEditor()
+    camera.orthographic = True
+    camera.fov = 10
 
 
-app.run()
+    app.notesheet = NoteSheet()
+    app.keyboard = Keyboard()
+
+    # ns = NoteSection()
+
+
+    app.run()

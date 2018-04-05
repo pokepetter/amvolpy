@@ -23,6 +23,16 @@ class NoteSheet(Entity):
             )
         self.highlight.reparent_to(self)
 
+        self.selection = []
+        self.prev_selected = None
+
+        ns = NoteSection()
+        ns.reparent_to(self)
+        ns.x = 0
+        ns.y = 0
+        ns.z = -.1
+        self.prev_selected = ns
+
 
     def input(self, key):
         if key == 'scroll down':
@@ -36,6 +46,7 @@ class NoteSheet(Entity):
         ns.x = int(mouse.point[0] * 8) / 8
         ns.y = int(mouse.point[1] * 8) / 8
         ns.z = -.1
+        self.prev_selected = ns
 
     def update(self, dt):
         if self.hovered:
