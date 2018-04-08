@@ -6,6 +6,8 @@ class NoteSection(Entity):
 
     def __init__(self):
         super().__init__()
+
+        self.name = 'notesection'
         # self.parent = camera.ui
         self.model = 'quad'
         self.origin = (-.5, -.5)
@@ -57,9 +59,11 @@ class NoteSection(Entity):
         if key == 'space':
             self.play()
 
-
     def on_click(self):
+        print('click')
+        # if base.notesheet.mode == 'note':
         self.add_note(mouse.point[0], mouse.point[1])
+
 
 
     def play(self):
@@ -95,6 +99,18 @@ class NoteSection(Entity):
         distance = 48 - number
         sound.set_play_rate(pow(1 / 1.05946309436, distance))
         sound.play()
+
+    @property
+    def selected(self):
+        return self._selected
+
+    @selected.setter
+    def selected(self, value):
+        self._selected = value
+        if value:
+            self.color = color.light_gray
+        else:
+            self.color = color.gray
 
 
 class Note(Entity):
