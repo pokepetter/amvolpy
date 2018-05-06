@@ -1,5 +1,5 @@
 from pandaeditor import *
-from notesection import NoteSection
+from notesection import NoteSection, Header
 from panda3d.core import TextureStage
 import time
 
@@ -43,6 +43,7 @@ class NoteSheet(Entity):
         self.note_sections = list()
         self.selection = []
         self.prev_selected = None
+        self.can_drag = False
 
         self.create_note_section(0, 0)
 
@@ -50,8 +51,11 @@ class NoteSheet(Entity):
         self.recording = False
         self.start_time = time.time()
         self.indicator_start_x = self.indicator.x
-        self.modes = {'1':'move', '2':'note', '3':'volume', '4':'instrument'}
-        self.mode = 'move'
+        self.selection_text = Text(
+            parent = camera.ui,
+            position = (-.5 * window.aspect_ratio, .4)
+            )
+        self.selection_text.scale *= .1
 
 
     def new_project(self):
@@ -65,10 +69,6 @@ class NoteSheet(Entity):
 
 
     def input(self, key):
-        if key in self.modes:
-            self.mode = self.modes[key]
-            printvar(self.mode)
-
         if key == 'scroll down':
             camera.fov += scroll_sensitivity
         if key == 'scroll up':
@@ -80,10 +80,24 @@ class NoteSheet(Entity):
             else:
                 self.play()
 
+        if key == 'left mouse down':
+            # multiselect
+            if isinstance(mouse.hovered_entity, Header):
+                self.can_drag = True
+                if not mouse.hovered_entity.parent in self.selection:
+                    if not held_keys['shift']:
+                        self.selection.clear()
+                    self.selection.append(mouse.hovered_entity.parent)
+                    # print('add to selection:', mouse.hovered_entity.parent)
+            else:
+                self.selection.clear()
+                print('clear slecteion')
+
         if key == 'double click' and self.hovered:
             self.create_note_section(mouse.point[0], mouse.point[1])
 
-        if key == 'left mouse up' and self.mode == 'move':
+        if key == 'left mouse up':
+            self.can_drag = False
             for ns in self.selection:
                 ns.x = round(ns.x * self.scale_x) / self.scale_x
                 ns.y = round(ns.y * self.scale_y) / self.scale_y
@@ -96,8 +110,8 @@ class NoteSheet(Entity):
     def play(self):
         self.indicator_start_x = self.indicator.x
         self.playing = True
-        # for ns in self.notesections:
-        #     invoke(ns.play(), delay=ns.x)
+        for ns in self.notesections:
+            invoke(ns.play(), delay=ns.x)
 
 
     def clear_selection(self):
@@ -132,7 +146,7 @@ class NoteSheet(Entity):
             self.highlight.y = int(mouse.point[1] * self.scale_y) / self.scale_y
 
         # dragging
-        if mouse.left and self.mode == 'move':
+        if mouse.left and self.can_drag:
             for ns in self.selection:
                 ns.world_x += mouse.velocity[0] * camera.fov
                 ns.world_y += mouse.velocity[1] * camera.fov
@@ -145,6 +159,8 @@ class NoteSheet(Entity):
             camera.x = max(camera.x, 0)
             camera.y = max(camera.y, 0)
 
+        selection_string = '\n'.join([s.name for s in self.selection])
+        self.selection_text.text = selection_string
 
 if __name__ == '__main__':
     app = PandaEditor()

@@ -12,7 +12,13 @@ class Keyboard(Entity):
         print(scalechanger.scale)
         self.octave_offset = 0
 
-        self.noteNames = ("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B","C", "C#")
+        self.note_names = ("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B","C", "C#")
+        self.instantiate_note_overlays()
+        self.update_note_names()
+        self.parent = camera.ui
+        self.scale *= .025
+        self.position = (-.5 * camera.aspect_ratio, -.5)
+
 
     def input(self, key):
         for i, k in enumerate(self.keys):
@@ -22,7 +28,7 @@ class Keyboard(Entity):
 
                 for ns in base.notesheet.selection:
                     ns.play_note(note_num)
-                    
+
                 if len(base.notesheet.selection) == 0 and base.notesheet.prev_selected:
                     base.notesheet.prev_selected.play_note(note_num)
 
@@ -40,6 +46,27 @@ class Keyboard(Entity):
             print('noteoffset +')
             self.octave_offset += 1
             self.octave_offset = min(self.octave_offset, 5)
+
+
+    def instantiate_note_overlays(self):
+        for i in range(128):
+            nb = Button()
+            nb.parent = self
+            nb.scale_y = 1.5
+            nb.x = i
+            nb.text = 'N'
+            nb.text_entity.y = -.25
+            nb.origin = (-.5, -.5)
+
+
+    def update_note_names(self):
+        for i, child in enumerate(self.children):
+            if i % len(scalechanger.scale) == 0:
+                child.color = color.black66 * .8
+            else:
+                child.color = color.black66
+
+            child.text = self.note_names[scalechanger.note_offset(i, True)] + str(i // len(scalechanger.scale))
 
 
 if __name__ == '__main__':

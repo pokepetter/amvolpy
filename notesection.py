@@ -1,6 +1,8 @@
 from pandaeditor import *
 from direct.interval.IntervalGlobal import Sequence, Func, Wait, SoundInterval
+from note import Note
 import snapsettings
+
 
 class NoteSection(Entity):
 
@@ -21,6 +23,8 @@ class NoteSection(Entity):
         self.note_parent.parent = self
         # self.position = ()
 
+        self.header = Header()
+        self.header.parent = self
 
         # self.play_button = Button()
         # self.play_button.parent = self
@@ -61,9 +65,8 @@ class NoteSection(Entity):
 
     def on_click(self):
         print('click')
-        # if base.notesheet.mode == 'note':
-        self.add_note(mouse.point[0], mouse.point[1])
-
+        if base.notesheet.mode == 'note':
+            self.add_note(mouse.point[0], mouse.point[1])
 
 
     def play(self):
@@ -85,12 +88,19 @@ class NoteSection(Entity):
             s.start()
 
 
-    def add_note(self, x=0, y=0, strength=1, duration=1/4):
+    def input(self, key):
+        if key == 'space':
+            self.play()
+
+    def add_note(self, x=0, y=0, strength=1, length=1/4):
+        print('adding note at: ', x, y)
         n = Note()
+        n.length = length
         n.reparent_to(self.note_parent)
         n.position = (round(x * snapsettings.position_snap) / snapsettings.position_snap,
                       round(y * snapsettings.position_snap) / snapsettings.position_snap,
                       -.1)
+
 
     def play_note(self, number):
         # todo find closest
@@ -113,81 +123,19 @@ class NoteSection(Entity):
             self.color = color.gray
 
 
-class Note(Entity):
+class Header(Button):
+
     def __init__(self):
-        super().__init__()
-        self.model = 'quad'
-        self.rotation_z = 45
-        # self.color = color.clear
-        self.scale *= .05
-        self.z = -.1
-        self.collider = 'box'
-        self.model = None
-
-        self.circle = Entity(
-            model = 'circle_16',
-            parent = self,
-            color = color.lime,
+        super().__init__(
+            # parent = self.model,
+            # model = 'quad',
+            color = color.red,
+            origin = (0, .5),
+            y = .5,
             z = -.1,
-        )
-
-        self.length_indicator = Entity(
-            parent = self,
-            model = 'quad',
-            origin = (-.5, 0),
-            rotation_z = -45,
-            color = self.circle.color,
-            scale_y = .2
-        )
-
-        self.press_time = 0
-        print('------------------')
-        self.max_circle_size = self.circle.scale
-        self.length = 0
-        self.strength = .6
-
-
-    @property
-    def length(self):
-        return self._length
-
-    @length.setter
-    def length(self, value):
-        value = max(0, value)
-        self._length = value
-        self.length_indicator.scale_x = value * 10
-
-    @property
-    def strength(self):
-        return self._strength
-
-    @strength.setter
-    def strength(self, value):
-        self._strength = clamp(value, .2, 1)
-        self.circle.scale = Point3(1,1,1) * (self._strength + .2) * .5
-
-
-    def update(self, dt):
-        self.press_time += dt
-        if self.press_time >= snapsettings.add_length_snap:
-            if mouse.left and self.hovered:
-                self.length += snapsettings.add_length_snap
-            if mouse.right and self.hovered:
-                self.length -= snapsettings.add_length_snap
-
-            self.press_time = 0
-
-
-    def input(self, key):
-        if self.hovered:
-            if key == 'scroll up':
-                self.strength += .2
-            elif key == 'scroll down':
-                self.strength -= .2
-
-            if key == 'right mouse down':
-                destroy(self)
-
+            scale_y = .1,
+            collider = 'box'
+            )
 
 
 
@@ -200,4 +148,8 @@ if __name__ == '__main__':
     camera.fov = 10
 
     t = NoteSection()
+    t.add_note(0, 1/16)
+    t.add_note(.25, 2/16)
+    t.add_note(.5, 3/16)
+    t.add_note(.75, 2/16)
     app.run()
