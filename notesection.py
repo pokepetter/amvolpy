@@ -129,8 +129,8 @@ class Header(Button):
         super().__init__(
             # parent = self.model,
             # model = 'quad',
-            color = color.dark_gray,
-            origin = (0, .5),
+            color = color.red,
+            origin = (-.5, .5),
             x = .5,
             y = 1,
             z = -.1,
