@@ -148,8 +148,12 @@ class NoteSheet(Entity):
         # dragging
         if mouse.left and self.can_drag:
             for ns in self.selection:
-                ns.world_x += mouse.velocity[0] * camera.fov
-                ns.world_y += mouse.velocity[1] * camera.fov
+                try:
+                    ns.world_x += mouse.velocity[0] * camera.fov
+                    ns.world_y += mouse.velocity[1] * camera.fov
+                except:
+                    pass
+                    print(ns, 'is not an Entity')
 
         # panning
         if mouse.middle:

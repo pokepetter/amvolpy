@@ -130,8 +130,8 @@ class Header(Button):
             # parent = self.model,
             # model = 'quad',
             color = color.red,
-            origin = (0, .5),
-            y = .5,
+            origin = (-.5, .5),
+            y = 1,
             z = -.1,
             scale_y = .1,
             collider = 'box'

@@ -1,8 +1,9 @@
 ﻿from pandaeditor import *
 
-class ScaleChanger(object):
+class ScaleChanger(Entity):
 
     def __init__(self):
+        super().__init__()
         self.base_note_offset = 0
         self.scale_rotation = 0
 
@@ -45,8 +46,18 @@ class ScaleChanger(object):
         return filled_octaves * 12 + offset + self.base_note_offset
 
 
+    def input(self, key):
+        if key.isdigit():
+            if held_keys['shift']:
+                self.base_note_offset = int(key)
+                print('scale:', self.base_note_offset, '  ', base.keyboard.note_names[self.base_note_offset])
+            if held_keys['alt']:
+                self.scale_rotation = int(key)
+                printvar(self.scale_rotation)
+
 
 sys.modules[__name__] = ScaleChanger()
+
 
 if __name__ == '__main__':
     import scalechanger
