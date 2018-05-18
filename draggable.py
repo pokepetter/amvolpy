@@ -1,25 +1,20 @@
 from pandaeditor import *
 
-class Draggable(Entity):
+class Draggable(Button):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.dragging = False
 
-        self.model = 'quad'
-        self.color = color.lime * .5 + color.white *.5
-        self.collider = 'box'
-        # self.parent = camera.ui
+    def on_click(self):
+        self.dragging = True
 
     def input(self, key):
-        if key == 'scroll down':
-            camera.fov += 5
-            printvar(camera.fov)
-        if key == 'scroll up':
-            camera.fov -= 5
-            printvar(camera.fov)
+        if key == 'left mouse up':
+            self.dragging = False
 
     def update(self, dt):
-        if self.hovered and mouse.left:
+        if self.dragging:
             self.x += mouse.velocity[0] * camera.fov
             self.y += mouse.velocity[1] * camera.fov
 

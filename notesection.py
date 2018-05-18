@@ -129,13 +129,38 @@ class Header(Button):
         super().__init__(
             # parent = self.model,
             # model = 'quad',
-            color = color.red,
+            color = color.dark_gray,
             origin = (0, .5),
-            y = .5,
+            x = .5,
+            y = 1,
             z = -.1,
-            scale_y = .1,
+            scale_y = 2 / 16,
             collider = 'box'
             )
+        self.loop_button = ResizeButton()
+        self.loop_button.parent = self
+
+from draggable import Draggable
+class ResizeButton(Draggable):
+    def __init__(self):
+        super().__init__(
+        origin = (.5, .5),
+        position = (.5, 0, -1),
+        scale = (1/16, 1),
+        color = color.red
+        )
+        # self.dragging = False
+        # self.add_script(Draggable())
+
+    # def input(self, key):
+    #     if key == 'left mouse down' and self.hovered:
+    #         self.dragging = True
+    #
+    #     if key == 'left mouse up' and self.dragging:
+    #         print('add', mouse.delta[0])
+    #         self.parent.parent.scale_x += mouse.delta[0]
+    def drop(self):
+        print('DROP')
 
 
 
