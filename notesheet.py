@@ -1,6 +1,5 @@
 from pandaeditor import *
 from notesection import NoteSection, Header
-from panda3d.core import TextureStage
 import time
 
 scroll_sensitivity = 5
@@ -15,9 +14,10 @@ class NoteSheet(Entity):
         self.texture = 'white_cube'
 
         self.scale = (256, 64)
-        self.setTexScale(TextureStage.getDefault(), self.scale_x, self.scale_y)
-        # self.setTexOffset(ts, -4, -2)
-        self.set_texture = loader.load_texture('white_cube.png')
+        self.texture_scale = (self.scale_x, self.scale_y)
+        # self.setTexScale(TextureStage.getDefault(), self.scale_x, self.scale_y)
+        # # self.setTexOffset(ts, -4, -2)
+        # self.set_texture = loader.load_texture('white_cube.png')
 
         self.color = color.gray
         self.origin = (-.5, -.5)

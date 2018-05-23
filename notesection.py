@@ -11,50 +11,33 @@ class NoteSection(Entity):
 
         self.name = 'notesection'
         # self.parent = camera.ui
-        self.model = 'quad'
-        self.origin = (-.5, -.5)
+        # self.model = 'quad'
+        # self.origin = (-.5, -.5)
         # self.position = (-5, -5)
-        self.color = color.color(0, 0, .06)
+        # self.color = color.color(0, 0, .06)
         # self.scale *= 8
-        self.collider = 'box'
+        # self.collider = 'box'
 
         self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
-        self.note_parent = Entity()
-        self.note_parent.parent = self
-        # self.position = ()
+
+        self.bg = Entity(
+            model='quad',
+            origin=(-.5, -.5),
+            color = color.color(0, 0, .06),
+            collider = 'box'
+            )
+
+        self.note_parent = Entity(parent=self)
 
         self.header = Header()
-        self.header.parent = self
-
-        # self.play_button = Button()
-        # self.play_button.parent = self
-        # self.play_button.color = color.pink
-        # self.play_button.origin = (-.5, -.5, .01)
-        # self.play_button.reparent_to(self)
-        # self.play_button.scale_x = 1/8
-        # self.play_button.scale_y /= 2
-        # self.play_button.y += 1/16
-        # self.play_button.x += 1/16
+        self.header.parent = self.bg
+        self.resize_button = ResizeButton()
+        self.resize_button.parent = self.header
+        self.resize_button.note_section = self
 
         #GRID
-
-        for y in range(16):
-            e = Panel()
-            e.parent = self
-            e.scale_y = .008
-            e.color = color.color(0, 0, .12)
-            e.origin = (-.5, 0)
-            e.y = y / 16
-            e.z = -.01
-
-        for x in range(4):
-            e = Panel()
-            e.parent = self
-            e.scale_x    = .008
-            e.color = color.color(0, 0, .12)
-            e.origin = (0, -.5)
-            e.x = x / 4
-            e.z = -.01
+        self.grid = Grid(4, 16, parent=self, z=-.1, color=color.gray)
+        self.grid.color = color.color(0, 0, .12)
 
         self.notes = list()
 
@@ -122,6 +105,22 @@ class NoteSection(Entity):
         else:
             self.color = color.gray
 
+class Grid(Entity):
+    def __init__(self, w, h, **kwargs):
+        super().__init__(**kwargs)
+
+        verts = list()
+        for x in range(w+1):
+            verts.append((x/w, 0, 0))
+            verts.append((x/w, 1, 0))
+        for y in range(h+1):
+            verts.append((0, y/h, 0))
+            verts.append((1, y/h, 0))
+
+        self.model = Mesh(verts, mode='line')
+
+        self.background = Entity(parent=self, model='quad')
+
 
 class Header(Button):
 
@@ -131,36 +130,30 @@ class Header(Button):
             # model = 'quad',
             color = color.red,
             origin = (-.5, .5),
-            x = .5,
+            # x = .5,
             y = 1,
             z = -.1,
             scale_y = 2 / 16,
             collider = 'box'
             )
-        self.loop_button = ResizeButton()
-        self.loop_button.parent = self
 
-from draggable import Draggable
+
 class ResizeButton(Draggable):
     def __init__(self):
         super().__init__(
-        origin = (.5, .5),
-        position = (.5, 0, -1),
-        scale = (1/16, 1),
-        color = color.red
-        )
-        # self.dragging = False
-        # self.add_script(Draggable())
+            origin = (.5, .5),
+            position = (1, 0, -.1),
+            scale = (1/16, 1),
+            color = color.green,
+            y_lock = True
+            )
 
-    # def input(self, key):
-    #     if key == 'left mouse down' and self.hovered:
-    #         self.dragging = True
-    #
-    #     if key == 'left mouse up' and self.dragging:
-    #         print('add', mouse.delta[0])
-    #         self.parent.parent.scale_x += mouse.delta[0]
     def drop(self):
-        print('DROP')
+        print('DROP', mouse.delta_drag)
+        self.note_section.bg.scale_x *= self.x
+        self.x = 1
+        self.y = 0
+        # self.scale_x = .1 / self.parent.scale_x
 
 
 
@@ -177,4 +170,5 @@ if __name__ == '__main__':
     t.add_note(.25, 2/16)
     t.add_note(.5, 3/16)
     t.add_note(.75, 2/16)
+    # g = Grid(20, 20)
     app.run()
