@@ -4,51 +4,50 @@ from note import Note
 import snapsettings
 
 
-class NoteSection(Entity):
+class NoteSection(Draggable):
 
     def __init__(self):
         super().__init__()
 
         self.name = 'notesection'
-        # self.parent = camera.ui
+        self.parent = scene
+        self.require_key = 'shift'
         # self.model = 'quad'
-        # self.origin = (-.5, -.5)
-        # self.position = (-5, -5)
+        self.origin = (-.5, -.5)
         # self.color = color.color(0, 0, .06)
-        # self.scale *= 8
-        # self.collider = 'box'
 
         self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
 
-        self.bg = Entity(
-            model='quad',
-            origin=(-.5, -.5),
-            color = color.color(0, 0, .06),
-            collider = 'box'
-            )
+        # self.bg = Entity(
+        #     parent = self,
+        #     model = 'quad',
+        #     origin = (-.5, -.5),
+        #     color = color.color(0, 0, .06),
+        #     collider = 'box'
+        #     )
 
         self.note_parent = Entity(parent=self)
 
-        self.header = Header()
-        self.header.parent = self.bg
         self.resize_button = ResizeButton()
-        self.resize_button.parent = self.header
+        self.resize_button.parent = self
         self.resize_button.note_section = self
 
         #GRID
         self.grid = Grid(4, 16, parent=self, z=-.1, color=color.gray)
-        self.grid.color = color.color(0, 0, .12)
+        # self.grid.color = color.color(0, 0, .12)
+        # self.grid.color = color.red
 
         self.notes = list()
 
 
     def input(self, key):
+        super().input(key)
         if key == 'space':
             self.play()
 
+
     def on_click(self):
-        print('click')
-        if base.notesheet.mode == 'note':
+        if not held_keys[self.require_key]:
             self.add_note(mouse.point[0], mouse.point[1])
 
 
@@ -70,10 +69,6 @@ class NoteSection(Entity):
         for s in self.playing_notes:
             s.start()
 
-
-    def input(self, key):
-        if key == 'space':
-            self.play()
 
     def add_note(self, x=0, y=0, strength=1, length=1/4):
         print('adding note at: ', x, y)
@@ -119,24 +114,7 @@ class Grid(Entity):
 
         self.model = Mesh(verts, mode='line')
 
-        self.background = Entity(parent=self, model='quad')
-
-
-class Header(Button):
-
-    def __init__(self):
-        super().__init__(
-            # parent = self.model,
-            # model = 'quad',
-            color = color.red,
-            origin = (-.5, .5),
-            # x = .5,
-            y = 1,
-            z = -.1,
-            scale_y = 2 / 16,
-            collider = 'box'
-            )
-
+        # self.background = Entity(parent=self, model='quad', origin=(-.5, -.5))
 
 class ResizeButton(Draggable):
     def __init__(self):
@@ -148,20 +126,29 @@ class ResizeButton(Draggable):
             y_lock = True
             )
 
+    def update(self, dt):
+        super().update(dt)
+        if self.dragging:
+            self.world_x = max(self.world_x - self.parent.world_x, 1)
+
     def drop(self):
-        print('DROP', mouse.delta_drag)
-        self.note_section.bg.scale_x *= self.x
+        # if self.x == 0:
+        #     destroy(self.note_section)
+        self.note_section.scale_x *= self.x
+        self.scale_x /= self.x
+        self.note_section.note_parent.scale_x /= self.x
+
+        # destroy(self.note_section.grid)
+        # self.note_section.grid = Grid(4 / self.note_section.scale_x, 16, parent=self, z=-.1, color=color.gray)
+
         self.x = 1
         self.y = 0
-        # self.scale_x = .1 / self.parent.scale_x
 
 
 
 if __name__ == '__main__':
     app = PandaEditor()
     window.color = color.color(0, 0, .12)
-    # cursor = Cursor()
-    # cursor.color = color.white33
     camera.orthographic = True
     camera.fov = 10
 
@@ -170,5 +157,4 @@ if __name__ == '__main__':
     t.add_note(.25, 2/16)
     t.add_note(.5, 3/16)
     t.add_note(.75, 2/16)
-    # g = Grid(20, 20)
     app.run()

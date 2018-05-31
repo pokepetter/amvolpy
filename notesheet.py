@@ -15,9 +15,6 @@ class NoteSheet(Entity):
 
         self.scale = (256, 64)
         self.texture_scale = (self.scale_x, self.scale_y)
-        # self.setTexScale(TextureStage.getDefault(), self.scale_x, self.scale_y)
-        # # self.setTexOffset(ts, -4, -2)
-        # self.set_texture = loader.load_texture('white_cube.png')
 
         self.color = color.gray
         self.origin = (-.5, -.5)
@@ -41,7 +38,6 @@ class NoteSheet(Entity):
             )
 
         self.note_sections = list()
-        self.selection = []
         self.prev_selected = None
         self.can_drag = False
 
@@ -51,11 +47,6 @@ class NoteSheet(Entity):
         self.recording = False
         self.start_time = time.time()
         self.indicator_start_x = self.indicator.x
-        self.selection_text = Text(
-            parent = camera.ui,
-            position = (-.5 * window.aspect_ratio, .4)
-            )
-        self.selection_text.scale *= .1
 
 
     def new_project(self):
@@ -80,27 +71,8 @@ class NoteSheet(Entity):
             else:
                 self.play()
 
-        if key == 'left mouse down':
-            # multiselect
-            if isinstance(mouse.hovered_entity, Header):
-                self.can_drag = True
-                if not mouse.hovered_entity.parent in self.selection:
-                    if not held_keys['shift']:
-                        self.selection.clear()
-                    self.selection.append(mouse.hovered_entity.parent)
-                    # print('add to selection:', mouse.hovered_entity.parent)
-            else:
-                self.selection.clear()
-                print('clear slecteion')
-
         if key == 'double click' and self.hovered:
             self.create_note_section(mouse.point[0], mouse.point[1])
-
-        if key == 'left mouse up':
-            self.can_drag = False
-            for ns in self.selection:
-                ns.x = round(ns.x * self.scale_x) / self.scale_x
-                ns.y = round(ns.y * self.scale_y) / self.scale_y
 
 
         # if key == 'delete':
@@ -114,12 +86,6 @@ class NoteSheet(Entity):
             invoke(ns.play(), delay=ns.x)
 
 
-    def clear_selection(self):
-        for ns in self.note_sections:
-            ns.selected = False
-            self.selection = list()
-
-
     def create_note_section(self, x, y):
         ns = NoteSection()
         ns.reparent_to(self)
@@ -127,9 +93,6 @@ class NoteSheet(Entity):
         ns.y = int(y * self.scale_y) / self.scale_y
         ns.z = -.1
         self.note_sections.append(ns)
-        self.prev_selected = ns
-        self.clear_selection()
-        self.selection.append(ns)
         ns.selected = True
 
         target_scale_y = ns.scale_y
@@ -145,15 +108,6 @@ class NoteSheet(Entity):
             self.highlight.x = int(mouse.point[0] * self.scale_x) / self.scale_x
             self.highlight.y = int(mouse.point[1] * self.scale_y) / self.scale_y
 
-        # dragging
-        if mouse.left and self.can_drag:
-            for ns in self.selection:
-                try:
-                    ns.world_x += mouse.velocity[0] * camera.fov
-                    ns.world_y += mouse.velocity[1] * camera.fov
-                except:
-                    pass
-                    print(ns, 'is not an Entity')
 
         # panning
         if mouse.middle:
