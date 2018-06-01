@@ -33,9 +33,7 @@ class NoteSection(Draggable):
         self.resize_button.note_section = self
 
         #GRID
-        self.grid = Grid(4, 16, parent=self, z=-.1, color=color.gray)
-        # self.grid.color = color.color(0, 0, .12)
-        # self.grid.color = color.red
+        self.grid = Grid(4 * round(self.scale_x), 16, parent=self, z=-.1, color=color.red)
 
         self.notes = list()
 
@@ -44,6 +42,10 @@ class NoteSection(Draggable):
         super().input(key)
         if key == 'space':
             self.play()
+
+    def drop(self):
+        self.x = round(self.x * 4) / 4
+        self.y = round(self.y)
 
 
     def on_click(self):
@@ -105,21 +107,24 @@ class Grid(Entity):
         super().__init__(**kwargs)
 
         verts = list()
-        for x in range(w+1):
+        for x in range(int(w) + 1):
             verts.append((x/w, 0, 0))
             verts.append((x/w, 1, 0))
-        for y in range(h+1):
+        for y in range(int(h) + 1):
             verts.append((0, y/h, 0))
             verts.append((1, y/h, 0))
 
-        self.model = Mesh(verts, mode='line')
+        if 'color' in kwargs:
+            self.model = Mesh(verts, colors=[kwargs['color'] for v in verts], mode='line')
+        else:
+            self.model = Mesh(verts, mode='line')
 
         # self.background = Entity(parent=self, model='quad', origin=(-.5, -.5))
 
 class ResizeButton(Draggable):
     def __init__(self):
         super().__init__(
-            origin = (.5, .5),
+            origin = (.5, -.5),
             position = (1, 0, -.1),
             scale = (1/16, 1),
             color = color.green,
@@ -129,20 +134,27 @@ class ResizeButton(Draggable):
     def update(self, dt):
         super().update(dt)
         if self.dragging:
-            self.world_x = max(self.world_x - self.parent.world_x, 1)
+            self.world_x = max(self.world_x, self.note_section.world_x + .25)
+            # self.world_x = int(self.world_x * 4) / 4
 
     def drop(self):
         # if self.x == 0:
         #     destroy(self.note_section)
+        self.world_x = round(self.world_x * 4) / 4
         self.note_section.scale_x *= self.x
         self.scale_x /= self.x
         self.note_section.note_parent.scale_x /= self.x
-
-        # destroy(self.note_section.grid)
-        # self.note_section.grid = Grid(4 / self.note_section.scale_x, 16, parent=self, z=-.1, color=color.gray)
-
         self.x = 1
         self.y = 0
+        
+        destroy(self.note_section.grid)
+        self.note_section.grid = Grid(
+            int(4 * self.note_section.scale_x),
+            16,
+            parent=self.note_section,
+            z=-.1,
+            color=color.gray
+            )
 
 
 

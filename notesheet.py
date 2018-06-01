@@ -1,5 +1,5 @@
 from pandaeditor import *
-from notesection import NoteSection, Header
+from notesection import NoteSection
 import time
 
 scroll_sensitivity = 5
@@ -117,8 +117,6 @@ class NoteSheet(Entity):
             camera.x = max(camera.x, 0)
             camera.y = max(camera.y, 0)
 
-        selection_string = '\n'.join([s.name for s in self.selection])
-        self.selection_text.text = selection_string
 
 if __name__ == '__main__':
     app = PandaEditor()
