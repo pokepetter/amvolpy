@@ -8,7 +8,7 @@ class Note(Entity):
         self.model = 'quad'
         self.rotation_z = 45
         # self.color = color.clear
-        self.scale *= .05
+        self.scale *= .1
         self.z = -.1
         self.collider = 'box'
         self.model = None

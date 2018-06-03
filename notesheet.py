@@ -39,8 +39,6 @@ class NoteSheet(Entity):
 
         self.note_sections = list()
         self.prev_selected = None
-        self.can_drag = False
-
         self.create_note_section(0, 0)
 
         self.playing = False
@@ -68,32 +66,29 @@ class NoteSheet(Entity):
         if key == 'space':
             if self.recording:
                 self.stop_recording()
-            else:
+            elif not self.playing:
                 self.play()
+            else:
+                self.stop()
 
         if key == 'double click' and self.hovered:
             self.create_note_section(mouse.point[0], mouse.point[1])
 
 
-        # if key == 'delete':
-        #     self.delete_selected_note_sections()
-
-
     def play(self):
         self.indicator_start_x = self.indicator.x
         self.playing = True
-        for ns in self.notesections:
-            invoke(ns.play(), delay=ns.x)
+        for ns in self.note_sections:
+            invoke(ns.play, delay=ns.x)
 
 
     def create_note_section(self, x, y):
         ns = NoteSection()
-        ns.reparent_to(self)
-        ns.x = int(x * self.scale_x) / self.scale_x
-        ns.y = int(y * self.scale_y) / self.scale_y
+        ns.x = int(x * self.scale_x)
+        ns.y = int(y * self.scale_y)
         ns.z = -.1
         self.note_sections.append(ns)
-        ns.selected = True
+        self.prev_selected = ns
 
         target_scale_y = ns.scale_y
         ns.scale_y = 0

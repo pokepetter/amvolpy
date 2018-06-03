@@ -13,8 +13,8 @@ class Keyboard(Entity):
         self.octave_offset = 0
 
         self.note_names = ("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B","C", "C#")
-        self.instantiate_note_overlays()
-        self.update_note_names()
+        # self.instantiate_note_overlays()
+        # self.update_note_names()
         self.parent = camera.ui
         self.scale *= .025
         self.position = (-.5 * camera.aspect_ratio, -.5)
@@ -26,14 +26,13 @@ class Keyboard(Entity):
                 note_num = i + (self.octave_offset * len(scalechanger.scale))
                 note_num = scalechanger.note_offset(note_num)
 
-                for ns in base.notesheet.selection:
-                    ns.play_note(note_num)
-
-                if len(base.notesheet.selection) == 0 and base.notesheet.prev_selected:
+                if base.notesheet.prev_selected:
                     base.notesheet.prev_selected.play_note(note_num)
-
+                    self.children[i].color = color.lime
 
             if key == k + ' up':
+                print('stop:', i)
+                self.children[i].color = self.children[i].unpressed_color
                 # instrumentChanger.StopPlayingNote(i + (octaveOffset * octaveLength))
                 pass
 
@@ -66,6 +65,7 @@ class Keyboard(Entity):
             else:
                 child.color = color.black66
 
+            child.unpressed_color = child.color
             child.text = self.note_names[scalechanger.note_offset(i, True)] + str(i // len(scalechanger.scale))
 
 

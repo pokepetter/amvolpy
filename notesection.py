@@ -2,6 +2,8 @@ from pandaeditor import *
 from direct.interval.IntervalGlobal import Sequence, Func, Wait, SoundInterval
 from note import Note
 import snapsettings
+from start_button import StartButton
+from end_button import EndButton
 
 
 class NoteSection(Draggable):
@@ -15,25 +17,28 @@ class NoteSection(Draggable):
         # self.model = 'quad'
         self.origin = (-.5, -.5)
         # self.color = color.color(0, 0, .06)
+        self.color = color.color(0,0,.1)
+        self.highlight_color = color.tint(self.color, .05)
 
         self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
 
-        # self.bg = Entity(
-        #     parent = self,
-        #     model = 'quad',
-        #     origin = (-.5, -.5),
-        #     color = color.color(0, 0, .06),
-        #     collider = 'box'
-        #     )
-
         self.note_parent = Entity(parent=self)
-
-        self.resize_button = ResizeButton()
-        self.resize_button.parent = self
-        self.resize_button.note_section = self
-
-        #GRID
-        self.grid = Grid(4 * round(self.scale_x), 16, parent=self, z=-.1, color=color.red)
+        self.loop_area = NoteArea(
+            note_section = self,
+            parent = self.note_parent,
+            color = color.color(1, 1, 0, .2),
+            origin = (-.5, -.5, .1)
+            )
+        # self.start_button = StartButton(note_section=self)
+        self.end_button = EndButton(note_section=self)
+        self.loop_button_end = LoopButton(note_section=self)
+        self.outline = Grid(1, 1, parent=self, color=color.dark_gray, z=-.2, thickness=4)
+        self.grid = Grid(
+            4 * round(self.loop_area.scale_x),
+            16,
+            parent = self.loop_area,
+            z = -.2,
+            color = color.tint(self.color, .1))
 
         self.notes = list()
 
@@ -43,15 +48,23 @@ class NoteSection(Draggable):
         if key == 'space':
             self.play()
 
+        if self.hovered and key == 'c':
+            self.crop()
+
+    def drag(self):
+        self.end_button.reparent_to(self)
+
     def drop(self):
         self.x = round(self.x * 4) / 4
         self.y = round(self.y)
+        self.end_button.reparent_to(self.parent)
 
 
-    def on_click(self):
-        if not held_keys[self.require_key]:
-            self.add_note(mouse.point[0], mouse.point[1])
 
+    def crop(self):
+        for n in self.note_parent.children:
+            if n.world_x - self.x < 0 or n.world_x >= self.x + self.scale_x:
+                destroy(n)
 
     def play(self):
         self.playing_notes = list()
@@ -74,12 +87,13 @@ class NoteSection(Draggable):
 
     def add_note(self, x=0, y=0, strength=1, length=1/4):
         print('adding note at: ', x, y)
+        x *= self.loop_area.scale_x
         n = Note()
         n.length = length
         n.reparent_to(self.note_parent)
         n.position = (round(x * snapsettings.position_snap) / snapsettings.position_snap,
                       round(y * snapsettings.position_snap) / snapsettings.position_snap,
-                      -.1)
+                      -1)
 
 
     def play_note(self, number):
@@ -90,73 +104,65 @@ class NoteSection(Draggable):
         sound.set_play_rate(pow(1 / 1.05946309436, distance))
         sound.play()
 
-    @property
-    def selected(self):
-        return self._selected
+    def draw_fake_notes(self):
+        if hasattr(self, 'fake_notes_parent'):
+            destroy(self.fake_notes_parent)
+        self.fake_notes_parent = Entity(parent=self)
+        print('loops:', self.scale_x / self.loop_area.scale_x)
 
-    @selected.setter
-    def selected(self, value):
-        self._selected = value
-        if value:
-            self.color = color.light_gray
-        else:
-            self.color = color.gray
+        # for i in range(self.world_x + self.loop_area.scale_x, self.world_x + self.scale_x):
 
-class Grid(Entity):
-    def __init__(self, w, h, **kwargs):
+
+
+
+class NoteArea(Button):
+    def __init__(self, note_section, **kwargs):
         super().__init__(**kwargs)
+        self.note_section = note_section
+        self.highlight_color = self.color
 
-        verts = list()
-        for x in range(int(w) + 1):
-            verts.append((x/w, 0, 0))
-            verts.append((x/w, 1, 0))
-        for y in range(int(h) + 1):
-            verts.append((0, y/h, 0))
-            verts.append((1, y/h, 0))
+    def on_click(self):
+        if not held_keys[self.note_section.require_key]:
+            self.note_section.add_note(mouse.point[0], mouse.point[1])
 
-        if 'color' in kwargs:
-            self.model = Mesh(verts, colors=[kwargs['color'] for v in verts], mode='line')
-        else:
-            self.model = Mesh(verts, mode='line')
+    def input(self, key):
+        if key == self.note_section.require_key:
+            # hide self so I can drag note section
+            self.z = 2
+        elif key == self.note_section.require_key + ' up':
+            self.z = 0
 
-        # self.background = Entity(parent=self, model='quad', origin=(-.5, -.5))
 
-class ResizeButton(Draggable):
-    def __init__(self):
+
+class LoopButton(Draggable):
+    def __init__(self, note_section):
         super().__init__(
             origin = (.5, -.5),
-            position = (1, 0, -.1),
+            position = (1, 0, -.3),
             scale = (1/16, 1),
             color = color.green,
             y_lock = True
             )
+        self.note_section = note_section
+        self.parent = note_section
+
 
     def update(self, dt):
         super().update(dt)
         if self.dragging:
             self.world_x = max(self.world_x, self.note_section.world_x + .25)
-            # self.world_x = int(self.world_x * 4) / 4
 
     def drop(self):
-        # if self.x == 0:
-        #     destroy(self.note_section)
+        print('drop loop buttoin')
         self.world_x = round(self.world_x * 4) / 4
         self.note_section.scale_x *= self.x
         self.scale_x /= self.x
         self.note_section.note_parent.scale_x /= self.x
         self.x = 1
-        self.y = 0
-        
-        destroy(self.note_section.grid)
-        self.note_section.grid = Grid(
-            int(4 * self.note_section.scale_x),
-            16,
-            parent=self.note_section,
-            z=-.1,
-            color=color.gray
-            )
+        self.note_section.draw_fake_notes()
 
 
+count_lines(__file__)
 
 if __name__ == '__main__':
     app = PandaEditor()
