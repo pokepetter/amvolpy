@@ -28,6 +28,7 @@ class EndButton(Draggable):
             self.note_section.loop_button_end.world_x = self.world_x
             self.note_section.loop_button_end.drop()
 
+        self.note_section.draw_fake_notes()
         destroy(self.note_section.grid)
         print('new grid size: ', int(4 * self.note_section.loop_area.scale_x))
         self.note_section.grid = Grid(
@@ -38,7 +39,6 @@ class EndButton(Draggable):
             color = color.tint(self.note_section.color, .3)
             )
 
-        self.note_section.draw_fake_notes()
 
 
 if __name__ == '__main__':

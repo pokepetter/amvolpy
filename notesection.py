@@ -2,9 +2,13 @@ from pandaeditor import *
 from direct.interval.IntervalGlobal import Sequence, Func, Wait, SoundInterval
 from note import Note
 import snapsettings
-from start_button import StartButton
 from end_button import EndButton
 
+class Grid(Entity):
+    def __init__(self, w, h, **kwargs):
+        super().__init__()
+
+    pass
 
 class NoteSection(Draggable):
 
@@ -51,6 +55,10 @@ class NoteSection(Draggable):
         if self.hovered and key == 'c':
             self.crop()
 
+        # redraw after deleting note
+        if key == 'right mouse up':
+            self.draw_fake_notes()
+
     def drag(self):
         self.end_button.reparent_to(self)
 
@@ -62,7 +70,7 @@ class NoteSection(Draggable):
 
 
     def crop(self):
-        for n in self.note_parent.children:
+        for n in self.notes:
             if n.world_x - self.x < 0 or n.world_x >= self.x + self.scale_x:
                 destroy(n)
 
@@ -94,6 +102,7 @@ class NoteSection(Draggable):
         n.position = (round(x * snapsettings.position_snap) / snapsettings.position_snap,
                       round(y * snapsettings.position_snap) / snapsettings.position_snap,
                       -1)
+        self.draw_fake_notes()
 
 
     def play_note(self, number):
@@ -107,13 +116,39 @@ class NoteSection(Draggable):
     def draw_fake_notes(self):
         if hasattr(self, 'fake_notes_parent'):
             destroy(self.fake_notes_parent)
-        self.fake_notes_parent = Entity(parent=self)
+        self.fake_notes_parent = Entity(parent=self.note_parent)
         print('loops:', self.scale_x / self.loop_area.scale_x)
 
-        # for i in range(self.world_x + self.loop_area.scale_x, self.world_x + self.scale_x):
+        for n in self.notes:
+            n.enabled = n.x < self.loop_area.scale_x
+            # if n.x >= self.loop_area.scale_x:
+            #     n.enabled = False
+            # else:
+            #     n.enabled = True
+
+        # draw fake notes for loops
+        for i in range(1, math.ceil(self.scale_x / self.loop_area.scale_x)):
+            for n in [n for n in self.notes if n.x < self.loop_area.scale_x]:
+                if n.x + (i * self.loop_area.scale_x) >= self.scale_x:
+                    break
+                clone = FakeNote()
+                clone.strength = n.strength
+                clone.length = n.length
+                clone.color = color.color(60, .5, .5, 1)
+                clone.reparent_to(self.fake_notes_parent)
+                clone.x = n.x + (i * self.loop_area.scale_x)
+                clone.y = n.y
 
 
+    @property
+    def notes(self):
+        return [c for c in self.note_parent.children if c.type == 'Note']
 
+class FakeNote(Note):
+    def input(self, key):
+        pass
+    def update(self, dt):
+        pass
 
 class NoteArea(Button):
     def __init__(self, note_section, **kwargs):

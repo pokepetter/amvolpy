@@ -30,7 +30,6 @@ class Note(Entity):
         )
 
         self.press_time = 0
-        print('------------------')
         self.max_circle_size = self.circle.scale
         self.length = 0
         self.strength = .6
@@ -54,6 +53,15 @@ class Note(Entity):
     def strength(self, value):
         self._strength = clamp(value, .2, 1)
         self.circle.scale = Point3(1,1,1) * (self._strength + .2) * .5
+
+    @property
+    def color(self):
+        return self.circle.color
+
+    @color.setter
+    def color(self, value):
+        self.circle.color = value
+        self.length_indicator.color = value
 
 
     def update(self, dt):
