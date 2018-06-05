@@ -28,13 +28,14 @@ class Keyboard(Entity):
 
                 if base.notesheet.prev_selected:
                     base.notesheet.prev_selected.play_note(note_num)
-                    self.children[i].color = color.lime
+                    if i < len(self.children):
+                        self.children[i].color = color.lime
 
             if key == k + ' up':
                 print('stop:', i)
-                self.children[i].color = self.children[i].unpressed_color
                 # instrumentChanger.StopPlayingNote(i + (octaveOffset * octaveLength))
-                pass
+                if i < len(self.children):
+                    self.children[i].color = self.children[i].unpressed_color
 
         if key == ',':
             print('noteoffset -')

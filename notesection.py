@@ -77,20 +77,25 @@ class NoteSection(Draggable):
     def play(self):
         self.playing_notes = list()
         self.sounds = list()
+        self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
 
-        for note in (self.note_parent.children):
+        for note in (self.note_parent.children + self.fake_notes_parent.children):
             # self.play_note(note=int(n.y * 8), delay=int(n.x))
-            sound = loader.loadSfx("0DefaultPiano_n48.wav")
-            sound.set_play_rate((note.y * 8 * 1.05946309436))
+            self.sound.set_play_rate((note.y * 8 * 1.05946309436))
 
             s = Sequence()
             print('wait:',(note.x * 2))
             s.append(Wait((note.x * 2)))
-            s.append(SoundInterval(sound))
+            s.append(SoundInterval(self.sound))
             self.playing_notes.append(s)
 
         for s in self.playing_notes:
             s.start()
+
+    def stop(self):
+        print('stop')
+        for s in self.playing_notes:
+            s.finish()
 
 
     def add_note(self, x=0, y=0, strength=1, length=1/4):
@@ -119,12 +124,9 @@ class NoteSection(Draggable):
         self.fake_notes_parent = Entity(parent=self.note_parent)
         print('loops:', self.scale_x / self.loop_area.scale_x)
 
+        # disable out of bounds notes
         for n in self.notes:
             n.enabled = n.x < self.loop_area.scale_x
-            # if n.x >= self.loop_area.scale_x:
-            #     n.enabled = False
-            # else:
-            #     n.enabled = True
 
         # draw fake notes for loops
         for i in range(1, math.ceil(self.scale_x / self.loop_area.scale_x)):

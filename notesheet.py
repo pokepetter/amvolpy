@@ -81,6 +81,12 @@ class NoteSheet(Entity):
         for ns in self.note_sections:
             invoke(ns.play, delay=ns.x)
 
+    def stop(self):
+        self.indicator.x = self.indicator_start_x
+        self.playing = False
+        for ns in self.note_sections:
+            ns.stop()
+
 
     def create_note_section(self, x, y):
         ns = NoteSection()
