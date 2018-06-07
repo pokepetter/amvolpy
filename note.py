@@ -84,3 +84,10 @@ class Note(Entity):
 
             if key == 'right mouse down':
                 destroy(self)
+
+
+class FakeNote(Note):
+    def input(self, key):
+        pass
+    def update(self, dt):
+        pass

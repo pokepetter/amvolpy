@@ -1,14 +1,10 @@
 from pandaeditor import *
 from direct.interval.IntervalGlobal import Sequence, Func, Wait, SoundInterval
-from note import Note
+from note import Note, FakeNote
 import snapsettings
 from end_button import EndButton
+from instrument_panel import InstrumentPanel
 
-class Grid(Entity):
-    def __init__(self, w, h, **kwargs):
-        super().__init__()
-
-    pass
 
 class NoteSection(Draggable):
 
@@ -27,13 +23,14 @@ class NoteSection(Draggable):
         self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
 
         self.note_parent = Entity(parent=self)
+        self.fake_notes_parent = Entity(parent=self.note_parent)
         self.loop_area = NoteArea(
             note_section = self,
             parent = self.note_parent,
             color = color.color(1, 1, 0, .2),
             origin = (-.5, -.5, .1)
             )
-        # self.start_button = StartButton(note_section=self)
+        self.play_button = PlayButton(note_section=self)
         self.end_button = EndButton(note_section=self)
         self.loop_button_end = LoopButton(note_section=self)
         self.outline = Grid(1, 1, parent=self, color=color.dark_gray, z=-.2, thickness=4)
@@ -44,13 +41,12 @@ class NoteSection(Draggable):
             z = -.2,
             color = color.tint(self.color, .1))
 
+        self.playing = False
         self.notes = list()
 
 
     def input(self, key):
         super().input(key)
-        if key == 'space':
-            self.play()
 
         if self.hovered and key == 'c':
             self.crop()
@@ -77,14 +73,13 @@ class NoteSection(Draggable):
     def play(self):
         self.playing_notes = list()
         self.sounds = list()
-        self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
 
         for note in (self.note_parent.children + self.fake_notes_parent.children):
-            # self.play_note(note=int(n.y * 8), delay=int(n.x))
+            self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
             self.sound.set_play_rate((note.y * 8 * 1.05946309436))
 
             s = Sequence()
-            print('wait:',(note.x * 2))
+            print('wait:',(note.x * 2), (note.y * 8 * 1.05946309436))
             s.append(Wait((note.x * 2)))
             s.append(SoundInterval(self.sound))
             self.playing_notes.append(s)
@@ -92,10 +87,14 @@ class NoteSection(Draggable):
         for s in self.playing_notes:
             s.start()
 
+        self.playing = True
+
+
     def stop(self):
         print('stop')
         for s in self.playing_notes:
             s.finish()
+        self.playing = False
 
 
     def add_note(self, x=0, y=0, strength=1, length=1/4):
@@ -119,8 +118,7 @@ class NoteSection(Draggable):
         sound.play()
 
     def draw_fake_notes(self):
-        if hasattr(self, 'fake_notes_parent'):
-            destroy(self.fake_notes_parent)
+        destroy(self.fake_notes_parent)
         self.fake_notes_parent = Entity(parent=self.note_parent)
         print('loops:', self.scale_x / self.loop_area.scale_x)
 
@@ -146,11 +144,7 @@ class NoteSection(Draggable):
     def notes(self):
         return [c for c in self.note_parent.children if c.type == 'Note']
 
-class FakeNote(Note):
-    def input(self, key):
-        pass
-    def update(self, dt):
-        pass
+
 
 class NoteArea(Button):
     def __init__(self, note_section, **kwargs):
@@ -190,13 +184,34 @@ class LoopButton(Draggable):
             self.world_x = max(self.world_x, self.note_section.world_x + .25)
 
     def drop(self):
-        print('drop loop buttoin')
+        print('drop loop button')
         self.world_x = round(self.world_x * 4) / 4
         self.note_section.scale_x *= self.x
         self.scale_x /= self.x
         self.note_section.note_parent.scale_x /= self.x
         self.x = 1
         self.note_section.draw_fake_notes()
+
+class PlayButton(Button):
+    def __init__(self, note_section):
+        super().__init__(
+            parent = note_section,
+            color = color.blue,
+            position = (0, 1),
+            text = '>',
+            z = -1.5
+            )
+        self.note_section = note_section
+        self.text_entity.scale *= 3
+        self.scale *= .1
+
+
+    def on_click(self):
+        if not self.note_section.playing:
+            self.note_section.play()
+            print('play note sectino click')
+        else:
+            self.note_section.stop()
 
 
 count_lines(__file__)
