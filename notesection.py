@@ -4,13 +4,18 @@ from note import Note, FakeNote
 import snapsettings
 from end_button import EndButton
 from instrument_panel import InstrumentPanel
+import save
 
 
 class NoteSection(Draggable):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
-
+        try:
+            base.notesheet.note_sections.append(self)
+        except:
+            pass
+            # print('no notesheet')
         self.name = 'notesection'
         self.parent = scene
         self.require_key = 'shift'
@@ -44,6 +49,8 @@ class NoteSection(Draggable):
         self.playing = False
         self.notes = list()
 
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     def input(self, key):
         super().input(key)
@@ -196,11 +203,15 @@ class PlayButton(Button):
     def __init__(self, note_section):
         super().__init__(
             parent = note_section,
-            color = color.blue,
+            # model = Circle(),
+            color = color.yellow,
             position = (0, 1),
             text = '>',
             z = -1.5
             )
+        # printvar(Circle())
+        # self.model = None
+        self.model = Circle(5)
         self.note_section = note_section
         self.text_entity.scale *= 3
         self.scale *= .1

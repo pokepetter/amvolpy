@@ -3,7 +3,7 @@ import snapsettings
 
 
 class Note(Entity):
-    def __init__(self):
+    def __init__(self, x=0, y=0, length=.25, strength=.6):
         super().__init__()
         self.model = 'quad'
         self.rotation_z = 45
@@ -31,8 +31,11 @@ class Note(Entity):
 
         self.press_time = 0
         self.max_circle_size = self.circle.scale
-        self.length = 0
-        self.strength = .6
+
+        self.x = x
+        self.y = y
+        self.length = length
+        self.strength = strength
 
 
     @property

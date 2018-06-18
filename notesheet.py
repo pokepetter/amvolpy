@@ -39,7 +39,6 @@ class NoteSheet(Entity):
 
         self.note_sections = list()
         self.prev_selected = None
-        self.create_note_section(0, 0)
 
         self.playing = False
         self.recording = False
@@ -93,7 +92,6 @@ class NoteSheet(Entity):
         ns.x = int(x * self.scale_x)
         ns.y = int(y * self.scale_y)
         ns.z = -.1
-        self.note_sections.append(ns)
         self.prev_selected = ns
 
         target_scale_y = ns.scale_y

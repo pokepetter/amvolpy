@@ -11,13 +11,12 @@ class Amvol(Entity):
 
     def __init__(self):
         super().__init__()
-        # window.position = (0, 0)
-        # window.size = (1920, 800)
         camera.orthographic = True
         camera.fov = 15
         window.color = color.gray
 
         app.notesheet = NoteSheet()
+        app.notesheet.create_note_section(0, 0)
         app.keyboard = Keyboard()
 
     #     app.mode = 'move'
