@@ -1,4 +1,4 @@
-from pandaeditor import *
+from ursina import *
 from keyboard import Keyboard
 from notesheet import NoteSheet
 from notesection import NoteSection
@@ -32,6 +32,6 @@ class Amvol(Entity):
     #     if key in self.mode_buttons:
     #         print(self.mode_buttons.index(key))
 
-app = PandaEditor()
+app = Ursina()
 amvol = Amvol()
 app.run()

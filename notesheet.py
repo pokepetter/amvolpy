@@ -1,4 +1,4 @@
-from pandaeditor import *
+from ursina import *
 from notesection import NoteSection
 import time
 
@@ -122,7 +122,7 @@ class NoteSheet(Entity):
 
 
 if __name__ == '__main__':
-    app = PandaEditor()
+    app = Ursina()
     camera.orthographic = True
     camera.fov = 10
     sheet = NoteSheet()

@@ -1,4 +1,4 @@
-from pandaeditor import *
+from ursina import *
 
 class Rec(Entity):
     def __init__(self):

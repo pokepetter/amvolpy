@@ -1,4 +1,4 @@
-from pandaeditor import *
+from ursina import *
 
 
 class Save(Entity):
@@ -15,7 +15,7 @@ class Save(Entity):
             path = application.asset_folder + 'test' + '.py'
 
         f = '''
-from pandaeditor import *
+from ursina import *
 from notesection import NoteSection
 from note import Note
 '''

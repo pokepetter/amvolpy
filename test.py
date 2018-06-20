@@ -1,5 +1,5 @@
 
-from pandaeditor import *
+from ursina import *
 from notesection import NoteSection
 from note import Note
 

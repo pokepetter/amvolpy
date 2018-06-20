@@ -1,4 +1,4 @@
-from pandaeditor import *
+from ursina import *
 import scalechanger
 import notesheet
 from notesection import NoteSection
@@ -34,7 +34,7 @@ class Keyboard(Entity):
                     if i < len(self.children):
                         self.children[i].color = color.lime
 
-                
+
 
 
             if key == k + ' up':
@@ -77,7 +77,7 @@ class Keyboard(Entity):
 
 
 if __name__ == '__main__':
-    app = PandaEditor()
+    app = Ursina()
     kb = Keyboard()
     app.run()
 

@@ -1,4 +1,4 @@
-from pandaeditor import *
+from ursina import *
 
 
 class LoopButton(Draggable):
@@ -25,7 +25,7 @@ class LoopButton(Draggable):
     def drop(self):
         play_button_world_scale_x = self.note_section.play_button.world_scale_x
         end_button_world_scale_x = self.note_section.end_button.world_scale_x
-        
+
         print('drop loop button')
         self.world_x = round(self.world_x * 4) / 4
         self.note_section.scale_x *= self.x

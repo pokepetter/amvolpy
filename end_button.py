@@ -1,4 +1,4 @@
-from pandaeditor import *
+from ursina import *
 
 
 class EndButton(Draggable):
@@ -48,7 +48,7 @@ class EndButton(Draggable):
 
 
 if __name__ == '__main__':
-    app = PandaEditor()
+    app = Ursina()
     window.color = color.color(0, 0, .12)
     camera.orthographic = True
     camera.fov = 10

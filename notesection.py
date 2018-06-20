@@ -1,4 +1,4 @@
-from pandaeditor import *
+from ursina import *
 from direct.interval.IntervalGlobal import Sequence, Func, Wait, SoundInterval
 from note import Note, FakeNote
 import snapsettings
@@ -204,7 +204,7 @@ class NoteArea(Button):
 
 
 if __name__ == '__main__':
-    app = PandaEditor()
+    app = Ursina()
     window.color = color.color(0, 0, .12)
     camera.orthographic = True
     camera.fov = 10

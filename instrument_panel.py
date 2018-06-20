@@ -1,4 +1,4 @@
-from pandaeditor import *
+from ursina import *
 
 
 class InstrumentPanel(Entity):
@@ -61,6 +61,6 @@ class Slider(Button):
 
 
 if __name__ == '__main__':
-    app = PandaEditor()
+    app = Ursina()
     slider = InstrumentPanel()
     app.run()
