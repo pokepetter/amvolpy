@@ -3,6 +3,8 @@ from direct.interval.IntervalGlobal import Sequence, Func, Wait, SoundInterval
 from note import Note, FakeNote
 import snapsettings
 from end_button import EndButton
+from loop_button import LoopButton
+from play_button import PlayButton
 from instrument_panel import InstrumentPanel
 import save
 
@@ -29,7 +31,7 @@ class NoteSection(Draggable):
 
         self.note_parent = Entity(parent=self)
         self.fake_notes_parent = Entity(parent=self.note_parent)
-        self.loop_area = NoteArea(
+        self.note_area = NoteArea(
             note_section = self,
             parent = self.note_parent,
             color = color.color(1, 1, 0, .2),
@@ -40,27 +42,48 @@ class NoteSection(Draggable):
         self.loop_button_end = LoopButton(note_section=self)
         self.outline = Grid(1, 1, parent=self, color=color.dark_gray, z=-.2, thickness=4)
         self.grid = Grid(
-            4 * round(self.loop_area.scale_x),
+            4 * round(self.note_area.scale_x),
             16,
-            parent = self.loop_area,
+            parent = self.note_area,
             z = -.2,
             color = color.tint(self.color, .1))
 
         self.playing = False
         self.notes = list()
 
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        # for key, value in kwargs.items():
+        #     if key == 'end':
+        #         self.end_button.x = value
+        #         return
+        #     if key == 'loop_end':
+        #         self.loop_button_end.x = value
+        #         return
+        #     if key == 'notes':
+        #         setattr(self, key, value)
+        #         for n in self.notes:
+        #             n.reparent_to(self.note_parent)
+        #
+        #     try:
+        #         setattr(self, key, value)
+        #         print('setting:', key , value)
+        #     except:
+        #         print('no attr:', key, value)
 
     def input(self, key):
         super().input(key)
 
-        if self.hovered and key == 'c':
-            self.crop()
+        if self.hovered or self.note_area.hovered:
+            if key == 'c':
+                self.crop()
 
         # redraw after deleting note
         if key == 'right mouse up':
             self.draw_fake_notes()
+
+        if self.hovered or self.note_area.hovered:
+            if key == 'delete':
+                destroy(self)
+
 
     def drag(self):
         self.end_button.reparent_to(self)
@@ -73,6 +96,7 @@ class NoteSection(Draggable):
 
 
     def crop(self):
+        print('crop')
         for n in self.notes:
             if n.world_x - self.x < 0 or n.world_x >= self.x + self.scale_x:
                 destroy(n)
@@ -106,7 +130,7 @@ class NoteSection(Draggable):
 
     def add_note(self, x=0, y=0, strength=1, length=1/4):
         print('adding note at: ', x, y)
-        x *= self.loop_area.scale_x
+        x *= self.note_area.scale_x
         n = Note()
         n.length = length
         n.reparent_to(self.note_parent)
@@ -127,23 +151,23 @@ class NoteSection(Draggable):
     def draw_fake_notes(self):
         destroy(self.fake_notes_parent)
         self.fake_notes_parent = Entity(parent=self.note_parent)
-        print('loops:', self.scale_x / self.loop_area.scale_x)
+        print('loops:', self.scale_x / self.note_area.scale_x)
 
         # disable out of bounds notes
         for n in self.notes:
-            n.enabled = n.x < self.loop_area.scale_x
+            n.enabled = n.x < self.note_area.scale_x
 
         # draw fake notes for loops
-        for i in range(1, math.ceil(self.scale_x / self.loop_area.scale_x)):
-            for n in [n for n in self.notes if n.x < self.loop_area.scale_x]:
-                if n.x + (i * self.loop_area.scale_x) >= self.scale_x:
+        for i in range(1, math.ceil(self.scale_x / self.note_area.scale_x)):
+            for n in [n for n in self.notes if n.x < self.note_area.scale_x]:
+                if n.x + (i * self.note_area.scale_x) >= self.scale_x:
                     break
                 clone = FakeNote()
                 clone.strength = n.strength
                 clone.length = n.length
                 clone.color = color.color(60, .5, .5, 1)
                 clone.reparent_to(self.fake_notes_parent)
-                clone.x = n.x + (i * self.loop_area.scale_x)
+                clone.x = n.x + (i * self.note_area.scale_x)
                 clone.y = n.y
 
 
@@ -151,6 +175,12 @@ class NoteSection(Draggable):
     def notes(self):
         return [c for c in self.note_parent.children if c.type == 'Note']
 
+
+    def on_destroy(self):
+        print('desrtoy')
+        # destroy(self.end_button)
+        self.end_button.reparent_to(self)
+        base.notesheet.note_sections.remove(self)
 
 
 class NoteArea(Button):
@@ -172,60 +202,6 @@ class NoteArea(Button):
 
 
 
-class LoopButton(Draggable):
-    def __init__(self, note_section):
-        super().__init__(
-            origin = (.5, -.5),
-            position = (1, 0, -.3),
-            scale = (1/16, 1),
-            color = color.green,
-            y_lock = True
-            )
-        self.note_section = note_section
-        self.parent = note_section
-
-
-    def update(self, dt):
-        super().update(dt)
-        if self.dragging:
-            self.world_x = max(self.world_x, self.note_section.world_x + .25)
-
-    def drop(self):
-        print('drop loop button')
-        self.world_x = round(self.world_x * 4) / 4
-        self.note_section.scale_x *= self.x
-        self.scale_x /= self.x
-        self.note_section.note_parent.scale_x /= self.x
-        self.x = 1
-        self.note_section.draw_fake_notes()
-
-class PlayButton(Button):
-    def __init__(self, note_section):
-        super().__init__(
-            parent = note_section,
-            # model = Circle(),
-            color = color.yellow,
-            position = (0, 1),
-            text = '>',
-            z = -1.5
-            )
-        # printvar(Circle())
-        # self.model = None
-        self.model = Circle(5)
-        self.note_section = note_section
-        self.text_entity.scale *= 3
-        self.scale *= .1
-
-
-    def on_click(self):
-        if not self.note_section.playing:
-            self.note_section.play()
-            print('play note sectino click')
-        else:
-            self.note_section.stop()
-
-
-count_lines(__file__)
 
 if __name__ == '__main__':
     app = PandaEditor()

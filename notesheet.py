@@ -50,8 +50,8 @@ class NoteSheet(Entity):
         if self.note_sections:
             print("warning")
         for ns in self.note_sections:
-            ns.die()
-        self.self.note_sections.clear()
+            destroy(ns)
+        self.note_sections.clear()
 
         # tempoTapper.tempo = 60
 
@@ -97,6 +97,7 @@ class NoteSheet(Entity):
         target_scale_y = ns.scale_y
         ns.scale_y = 0
         ns.animate_scale_y(target_scale_y)
+        return ns
 
     def update(self, dt):
         if self.playing:

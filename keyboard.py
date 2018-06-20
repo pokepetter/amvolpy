@@ -23,7 +23,7 @@ class Keyboard(Entity):
     def input(self, key):
         if held_keys['control']:
             return
-            
+
         for i, k in enumerate(self.keys):
             if key == k:
                 note_num = i + (self.octave_offset * len(scalechanger.scale))
@@ -33,6 +33,9 @@ class Keyboard(Entity):
                     base.notesheet.prev_selected.play_note(note_num)
                     if i < len(self.children):
                         self.children[i].color = color.lime
+
+                
+
 
             if key == k + ' up':
                 print('stop:', i)

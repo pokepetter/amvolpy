@@ -48,6 +48,7 @@ from note import Note
             # print(ask for name)
             path = application.asset_folder + 'test' + '.py'
 
+        base.notesheet.new_project()
         with open(path, 'r') as file:
             exec(file.read())
             file.read()
