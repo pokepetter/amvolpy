@@ -1,4 +1,5 @@
 from ursina import *
+from scalechanger import ScaleChanger
 from keyboard import Keyboard
 from notesheet import NoteSheet
 from notesection import NoteSection
@@ -7,7 +8,7 @@ from rec import Rec
 color.notesection = color.color(0, 0, .08)
 
 
-    # ns = NoteSection()
+
 class Amvol(Entity):
 
     def __init__(self):
@@ -16,8 +17,9 @@ class Amvol(Entity):
         camera.fov = 15
         window.color = color.gray
 
+        app.scalechanger = ScaleChanger()
         app.notesheet = NoteSheet()
-        # app.notesheet.create_note_section(0, 0)
+        app.notesheet.create_note_section(0, 0)
         app.keyboard = Keyboard()
         app.rec = Rec()
     #     app.mode = 'move'
@@ -27,10 +29,7 @@ class Amvol(Entity):
     #         'write',
     #
     #     )
-    #
-    # def input(self, key):
-    #     if key in self.mode_buttons:
-    #         print(self.mode_buttons.index(key))
+
 
 app = Ursina()
 amvol = Amvol()

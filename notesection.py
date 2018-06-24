@@ -49,25 +49,7 @@ class NoteSection(Draggable):
             color = color.tint(self.color, .1))
 
         self.playing = False
-        self.notes = list()
 
-        # for key, value in kwargs.items():
-        #     if key == 'end':
-        #         self.end_button.x = value
-        #         return
-        #     if key == 'loop_end':
-        #         self.loop_button_end.x = value
-        #         return
-        #     if key == 'notes':
-        #         setattr(self, key, value)
-        #         for n in self.notes:
-        #             n.reparent_to(self.note_parent)
-        #
-        #     try:
-        #         setattr(self, key, value)
-        #         print('setting:', key , value)
-        #     except:
-        #         print('no attr:', key, value)
 
     def input(self, key):
         super().input(key)
@@ -149,9 +131,13 @@ class NoteSection(Draggable):
         sound.play()
 
     def draw_fake_notes(self):
+        if self.note_area.scale_x == 0:
+            print('ERROR: note_area.scale_x == 0')
+            self.note_area.scale_x = max(.25, self.note_area.scale_x)
+            # return
         destroy(self.fake_notes_parent)
         self.fake_notes_parent = Entity(parent=self.note_parent)
-        print('loops:', self.scale_x / self.note_area.scale_x)
+        # print('loops:', self.scale_x / self.note_area.scale_x)
 
         # disable out of bounds notes
         for n in self.notes:

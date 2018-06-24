@@ -26,11 +26,11 @@ class LoopButton(Draggable):
         play_button_world_scale_x = self.note_section.play_button.world_scale_x
         end_button_world_scale_x = self.note_section.end_button.world_scale_x
 
-        print('drop loop button')
+        print('drop loop button', self.x)
         self.world_x = round(self.world_x * 4) / 4
-        self.note_section.scale_x *= self.x
-        self.scale_x /= self.x
-        self.note_section.note_parent.scale_x /= self.x
+        self.note_section.world_scale_x = self.world_x - self.note_section.world_x
+        self.world_scale_x = 1/16
+        self.note_section.note_parent.world_scale_x = 1
         self.x = 1
         self.note_section.draw_fake_notes()
         self.note_section.end_button.reparent_to(self.note_section)

@@ -56,11 +56,11 @@ class ScaleChanger(Entity):
                 printvar(self.scale_rotation)
 
 
-sys.modules[__name__] = ScaleChanger()
+# sys.modules[__name__] = ScaleChanger()
 
 
-if __name__ == '__main__':
-    import scalechanger
-    print(1, scalechanger.note_offset(1))
-    print(5, scalechanger.note_offset(5))
-    print(9, scalechanger.note_offset(9))
+# if __name__ == '__main__':
+#     import scalechanger
+#     print(1, scalechanger.note_offset(1))
+#     print(5, scalechanger.note_offset(5))
+#     print(9, scalechanger.note_offset(9))

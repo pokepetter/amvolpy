@@ -1,5 +1,4 @@
 from ursina import *
-import scalechanger
 import notesheet
 from notesection import NoteSection
 
@@ -9,7 +8,7 @@ class Keyboard(Entity):
         super().__init__()
         allkeys = 'zxcvbnmasdfghjklqwertyuiop1234567890'
         self.keys = [char for char in allkeys]
-        print(scalechanger.scale)
+        print(base.scalechanger.scale)
         self.octave_offset = 0
 
         self.note_names = ("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B","C", "C#")
@@ -26,8 +25,8 @@ class Keyboard(Entity):
 
         for i, k in enumerate(self.keys):
             if key == k:
-                note_num = i + (self.octave_offset * len(scalechanger.scale))
-                note_num = scalechanger.note_offset(note_num)
+                note_num = i + (self.octave_offset * len(base.scalechanger.scale))
+                note_num = base.scalechanger.note_offset(note_num)
 
                 if base.notesheet.prev_selected:
                     base.notesheet.prev_selected.play_note(note_num)
@@ -38,7 +37,7 @@ class Keyboard(Entity):
 
 
             if key == k + ' up':
-                print('stop:', i)
+                # print('stop:', i)
                 # instrumentChanger.StopPlayingNote(i + (octaveOffset * octaveLength))
                 if i < len(self.children):
                     self.children[i].color = self.children[i].unpressed_color
@@ -67,17 +66,19 @@ class Keyboard(Entity):
 
     def update_note_names(self):
         for i, child in enumerate(self.children):
-            if i % len(scalechanger.scale) == 0:
+            if i % len(base.scalechanger.scale) == 0:
                 child.color = color.black66 * .8
             else:
                 child.color = color.black66
 
             child.unpressed_color = child.color
-            child.text = self.note_names[scalechanger.note_offset(i, True)] + str(i // len(scalechanger.scale))
+            child.text = self.note_names[base.scalechanger.note_offset(i, True)] + str(i // len(base.scalechanger.scale))
 
 
 if __name__ == '__main__':
     app = Ursina()
+    from scalechanger import ScaleChanger
+    app.scalechanger = ScaleChanger()
     kb = Keyboard()
     app.run()
 

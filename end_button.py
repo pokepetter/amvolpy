@@ -22,14 +22,15 @@ class EndButton(Draggable):
         super().update(dt)
         if self.dragging:
             self.world_x = max(self.world_x, self.note_section.world_x + .25)
+            # self.world_x = round(self.world_x * 8) / 8
 
     def drop(self):
-        # super().drop()
         self.world_x = round(self.world_x * 4) / 4
-        print('drop end button')
+        # print('drop end button', self.world_x - self.note_section.world_x)
         self.note_section.note_area.scale_x = self.world_x - self.note_section.world_x
 
         if self.world_x > self.note_section.world_x + self.note_section.scale_x:
+            self.note_section.loop_button_end.drag()
             self.note_section.loop_button_end.world_x = self.world_x
             self.note_section.loop_button_end.drop()
             self.x = 1
