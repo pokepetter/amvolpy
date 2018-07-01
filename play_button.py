@@ -21,7 +21,8 @@ class PlayButton(Button):
 
     def on_click(self):
         if not self.note_section.playing:
+            base.rec.indicator.world_x = self.world_x
             self.note_section.play()
-            print('play note sectino click')
+            # print('play note section click')
         else:
             self.note_section.stop()

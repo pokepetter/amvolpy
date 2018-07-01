@@ -28,6 +28,7 @@ class NoteSection(Draggable):
         self.highlight_color = color.tint(self.color, .05)
 
         self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
+        self.octave = 0
 
         self.note_parent = Entity(parent=self)
         self.fake_notes_parent = Entity(parent=self.note_parent)
@@ -91,10 +92,15 @@ class NoteSection(Draggable):
             self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
             self.sound.set_play_rate((note.y * 8 * 1.05946309436))
 
-            s = Sequence()
-            print('wait:',(note.x * 2), (note.y * 8 * 1.05946309436))
-            s.append(Wait((note.x * 2)))
-            s.append(SoundInterval(self.sound))
+            # s = Sequence()
+            # # print('wait:',(note.x * 2), (note.y * 8 * 1.05946309436))
+            # s.append(Wait((note.x * 2)))
+            # # s.append(SoundInterval(self.sound))
+            # s.append()
+            note_num = int(note.y * 16) + (self.octave * 16)
+            note_num = base.scalechanger.note_offset(note_num)
+
+            s = invoke(self.play_note, note_num, delay=note.x)
             self.playing_notes.append(s)
 
         for s in self.playing_notes:
@@ -120,11 +126,12 @@ class NoteSection(Draggable):
                       round(y * snapsettings.position_snap) / snapsettings.position_snap,
                       -1)
         self.draw_fake_notes()
+        return n
 
 
     def play_note(self, number):
         # todo find closest
-        print('play note:', number)
+        # print('play note:', number)
         sound = loader.loadSfx("0DefaultPiano_n48.wav")
         distance = 48 - number
         sound.set_play_rate(pow(1 / 1.05946309436, distance))

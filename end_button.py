@@ -44,7 +44,7 @@ class EndButton(Draggable):
             16,
             parent = self.note_section.note_area,
             z = -.2,
-            color = color.tint(self.note_section.color, .3)
+            color = color.tint(self.note_section.color, .1)
             )
 
 
