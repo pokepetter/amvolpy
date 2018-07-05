@@ -1,6 +1,7 @@
 from ursina import *
 import notesheet
 from notesection import NoteSection
+from pygame import midi
 
 class Keyboard(Entity):
 
@@ -18,6 +19,20 @@ class Keyboard(Entity):
         self.scale *= .025
         self.position = (-.5 * camera.aspect_ratio, -.5)
 
+        midi.init()
+        self.player = midi.Input(midi.get_default_input_id())
+
+    def play_note(self, i, velocity=1):
+        print('yolo')
+        note_num = i + (self.octave_offset * len(base.scalechanger.scale))
+        note_num = base.scalechanger.note_offset(note_num)
+        print('try plast note', base.notesheet.prev_selected)
+        if base.notesheet.prev_selected:
+            base.notesheet.prev_selected.play_note(note_num)
+            print('played noe')
+            if i < len(self.children):
+                self.children[i].color = color.lime
+
 
     def input(self, key):
         if held_keys['control']:
@@ -25,16 +40,7 @@ class Keyboard(Entity):
 
         for i, k in enumerate(self.keys):
             if key == k:
-                note_num = i + (self.octave_offset * len(base.scalechanger.scale))
-                note_num = base.scalechanger.note_offset(note_num)
-
-                if base.notesheet.prev_selected:
-                    base.notesheet.prev_selected.play_note(note_num)
-                    if i < len(self.children):
-                        self.children[i].color = color.lime
-
-
-
+                self.play_note(i)
 
             if key == k + ' up':
                 # print('stop:', i)
@@ -52,6 +58,26 @@ class Keyboard(Entity):
             self.octave_offset += 1
             self.octave_offset = min(self.octave_offset, 5)
 
+
+    def update(self, dt):
+        midi_events = self.player.read(10)
+        # midi_evs = midi.midis2events(midi_events, self.player.device_id)
+        # print(midi_evs)
+        try:
+            if midi_events:
+                # print(midi_events)
+                for e in midi_events:
+                    # print(e[0])
+                    # 0:?, 1:note, 2:velocity
+                    if e[0][0] == 149: # note
+                        if e[0][2] > 0:
+                            print('note on:', e[0][1], 'vel:', e[0][2])
+                            self.play_note(e[0][1], velocity=e[0][2]/128)
+                        else:
+                            pass
+                            # print('note off:', e[0][1])
+        except:
+            pass
 
     def instantiate_note_overlays(self):
         for i in range(128):

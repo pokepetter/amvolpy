@@ -129,12 +129,13 @@ class NoteSection(Draggable):
         return n
 
 
-    def play_note(self, number):
+    def play_note(self, number, volume=1):
         # todo find closest
         # print('play note:', number)
         sound = loader.loadSfx("0DefaultPiano_n48.wav")
         distance = 48 - number
         sound.set_play_rate(pow(1 / 1.05946309436, distance))
+        sound.set_volume(volume)
         sound.play()
 
     def draw_fake_notes(self):
