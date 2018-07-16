@@ -20,7 +20,11 @@ class Keyboard(Entity):
         self.position = (-.5 * camera.aspect_ratio, -.5)
 
         midi.init()
-        self.player = midi.Input(midi.get_default_input_id())
+        self.player = None
+        if midi.Input(midi.get_default_input_id()) == -1:
+            print('no midi controller found')
+        else:
+            self.player = midi.Input(midi.get_default_input_id())
 
     def play_note(self, i, velocity=1):
         print('yolo')
@@ -28,7 +32,7 @@ class Keyboard(Entity):
         note_num = base.scalechanger.note_offset(note_num)
         print('try plast note', base.notesheet.prev_selected)
         if base.notesheet.prev_selected:
-            base.notesheet.prev_selected.play_note(note_num)
+            base.notesheet.prev_selected.play_note(note_num, velocity)
             print('played noe')
             if i < len(self.children):
                 self.children[i].color = color.lime
@@ -60,6 +64,9 @@ class Keyboard(Entity):
 
 
     def update(self, dt):
+        if not self.player:
+            return
+
         midi_events = self.player.read(10)
         # midi_evs = midi.midis2events(midi_events, self.player.device_id)
         # print(midi_evs)
