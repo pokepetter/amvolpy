@@ -5,10 +5,10 @@ class LoopButton(Draggable):
     def __init__(self, note_section):
         super().__init__(
             origin = (.5, -.5),
-            position = (1, 0, -.3),
+            position = (1, 0, -2.3),
             scale = (1/16, 1),
-            color = color.green,
-            y_lock = True
+            color = color.lime,
+            lock_y = True
             )
         self.note_section = note_section
         self.parent = note_section

@@ -20,7 +20,7 @@ class NoteSection(Draggable):
             # print('no notesheet')
         self.name = 'notesection'
         self.parent = scene
-        self.require_key = 'shift'
+        # self.require_key = 'shift'
         # self.model = 'quad'
         self.origin = (-.5, -.5)
         # self.color = color.color(0, 0, .06)
@@ -46,9 +46,10 @@ class NoteSection(Draggable):
             4 * round(self.note_area.scale_x),
             16,
             parent = self.note_area,
-            z = -.2,
+            z = -2.2,
             color = color.tint(self.color, .1))
 
+        self.sounds = list()
         self.playing = False
 
 
@@ -129,14 +130,24 @@ class NoteSection(Draggable):
         return n
 
 
-    def play_note(self, number, volume=1):
+    def play_note(self, i, volume=1):
         # todo find closest
         # print('play note:', number)
-        sound = loader.loadSfx("0DefaultPiano_n48.wav")
-        distance = 48 - number
-        sound.set_play_rate(pow(1 / 1.05946309436, distance))
-        sound.set_volume(volume)
-        sound.play()
+        # sound = loader.loadSfx("0DefaultPiano_n48.wav")
+        distance = 72 - i
+        self.sounds.append(Audio(
+            'violin-n72',
+            pitch = pow(1 / 1.05946309436, distance),
+            volume = volume,
+            i = i
+            ))
+
+    def stop_note(self, i):
+        for s in self.sounds:
+            if s.i == i:
+                s.stop()
+                self.sounds.remove(s)
+
 
     def draw_fake_notes(self):
         if self.note_area.scale_x == 0:
@@ -163,6 +174,7 @@ class NoteSection(Draggable):
                 clone.reparent_to(self.fake_notes_parent)
                 clone.x = n.x + (i * self.note_area.scale_x)
                 clone.y = n.y
+                clone.z = -.1
 
 
     @property
@@ -182,17 +194,21 @@ class NoteArea(Button):
         super().__init__(**kwargs)
         self.note_section = note_section
         self.highlight_color = self.color
+        self.z = 2
 
     def on_click(self):
-        if not held_keys[self.note_section.require_key]:
+        if held_keys['control']:
             self.note_section.add_note(mouse.point[0], mouse.point[1])
 
     def input(self, key):
-        if key == self.note_section.require_key:
-            # hide self so I can drag note section
-            self.z = 2
-        elif key == self.note_section.require_key + ' up':
+        if key == 'control':
+            # show self so I can place notes
             self.z = 0
+            self.note_section.grid.z += 2
+
+        elif key == 'control up':
+            self.z = 2
+            self.note_section.grid.z -= 2
 
 
 
@@ -209,3 +225,5 @@ if __name__ == '__main__':
     t.add_note(.5, 3/16)
     t.add_note(.75, 2/16)
     app.run()
+
+Audio('ritual_main_menu').play()

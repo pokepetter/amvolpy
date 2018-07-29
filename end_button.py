@@ -6,10 +6,10 @@ class EndButton(Draggable):
         super().__init__(
             parent = note_section,
             origin = (.5, .5),
-            position = (1, 1, -.5),
+            position = (1, 1, -2.5),
             scale = (1/16, .2),
-            color = color.red,
-            y_lock = True
+            color = color.orange,
+            lock_y = True
             )
         self.note_section = note_section
         # self.parent = note_section
@@ -43,7 +43,7 @@ class EndButton(Draggable):
             int(4 * self.note_section.note_area.scale_x),
             16,
             parent = self.note_section.note_area,
-            z = -.2,
+            z = -2.2,
             color = color.tint(self.note_section.color, .1)
             )
 

@@ -21,21 +21,34 @@ class Keyboard(Entity):
 
         midi.init()
         self.player = None
-        if midi.Input(midi.get_default_input_id()) == -1:
-            print('no midi controller found')
-        else:
+
+        try:
             self.player = midi.Input(midi.get_default_input_id())
+        except:
+            print('no midi controller found')
 
     def play_note(self, i, velocity=1):
-        print('yolo')
+        # print('yolo')
         note_num = i + (self.octave_offset * len(base.scalechanger.scale))
         note_num = base.scalechanger.note_offset(note_num)
-        print('try plast note', base.notesheet.prev_selected)
+        # print('try plast note', base.notesheet.prev_selected)
         if base.notesheet.prev_selected:
             base.notesheet.prev_selected.play_note(note_num, velocity)
-            print('played noe')
+            # print('played note')
             if i < len(self.children):
                 self.children[i].color = color.lime
+
+    def stop_note(self, i):
+        # print('yolo')
+        note_num = i + (self.octave_offset * len(base.scalechanger.scale))
+        note_num = base.scalechanger.note_offset(note_num)
+        print('stop note', base.notesheet.prev_selected)
+        if base.notesheet.prev_selected:
+            base.notesheet.prev_selected.stop_note(note_num)
+            # print('played note')
+            if i < len(self.children):
+                self.children[i].color = color.unpressed_color
+
 
 
     def input(self, key):
@@ -47,10 +60,7 @@ class Keyboard(Entity):
                 self.play_note(i)
 
             if key == k + ' up':
-                # print('stop:', i)
-                # instrumentChanger.StopPlayingNote(i + (octaveOffset * octaveLength))
-                if i < len(self.children):
-                    self.children[i].color = self.children[i].unpressed_color
+                self.stop_note(i)
 
         if key == ',':
             print('noteoffset -')
