@@ -67,8 +67,8 @@ class Note(Entity):
         self.length_indicator.color = value
 
 
-    def update(self, dt):
-        self.press_time += dt
+    def update(self):
+        self.press_time += time.dt
         if self.press_time >= snapsettings.add_length_snap:
             if mouse.left and self.hovered:
                 self.length += snapsettings.add_length_snap
@@ -92,5 +92,5 @@ class Note(Entity):
 class FakeNote(Note):
     def input(self, key):
         pass
-    def update(self, dt):
+    def update(self):
         pass

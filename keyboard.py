@@ -73,7 +73,7 @@ class Keyboard(Entity):
             self.octave_offset = min(self.octave_offset, 5)
 
 
-    def update(self, dt):
+    def update(self):
         if not self.player:
             return
 

@@ -99,7 +99,7 @@ class NoteSheet(Entity):
         ns.animate_scale_y(target_scale_y)
         return ns
 
-    def update(self, dt):
+    def update(self):
         if self.playing:
             # print(time.time() - self.start_time)
             self.indicator.x = self.indicator_start_x + (time.time() - self.start_time) / 4 / 4 / 2

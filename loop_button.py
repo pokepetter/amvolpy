@@ -14,8 +14,8 @@ class LoopButton(Draggable):
         self.parent = note_section
 
 
-    def update(self, dt):
-        super().update(dt)
+    def update(self):
+        super().update()
         if self.dragging:
             self.world_x = max(self.world_x, self.note_section.world_x + .25)
 

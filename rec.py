@@ -48,9 +48,9 @@ class Rec(Entity):
         self.recording = True
 
 
-    def update(self, dt):
+    def update(self):
         if self.recording:
-            self.indicator.world_x += dt
+            self.indicator.world_x += time.dt
 
 
     def input(self, key):

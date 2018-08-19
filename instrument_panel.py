@@ -45,7 +45,7 @@ class Slider(Button):
             setattr(self, key, value)
 
 
-    def update(self, dt):
+    def update(self):
         if self.hovered and mouse.left:
             self.knob.x = mouse.point[0]
             self.tooltip.text_entity.text = round(self.knob.x, 2)
