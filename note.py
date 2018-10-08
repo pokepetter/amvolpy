@@ -7,14 +7,13 @@ class Note(Entity):
         super().__init__()
         self.model = 'quad'
         self.rotation_z = 45
-        # self.color = color.clear
         self.scale *= .1
         self.z = -.1
         self.collider = 'box'
         self.model = None
 
         self.circle = Entity(
-            model = 'circle_16',
+            model = Circle(),
             parent = self,
             color = color.lime,
             z = -.1,

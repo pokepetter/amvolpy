@@ -37,16 +37,8 @@ class EndButton(Draggable):
 
 
         self.note_section.draw_fake_notes()
-        destroy(self.note_section.grid)
-        print('new grid size: ', int(4 * self.note_section.note_area.scale_x))
-        self.note_section.grid = Grid(
-            int(4 * self.note_section.note_area.scale_x),
-            16,
-            parent = self.note_section.note_area,
-            z = -2.2,
-            color = color.tint(self.note_section.color, .1)
-            )
-
+        # print('new grid size: ', int(4 * self.note_section.note_area.scale_x))
+        self.note_section.grid.model = Grid(int(4 * self.note_section.note_area.scale_x), 16)
 
 if __name__ == '__main__':
     app = Ursina()

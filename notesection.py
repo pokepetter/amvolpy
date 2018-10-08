@@ -40,10 +40,9 @@ class NoteSection(Draggable):
         self.play_button = PlayButton(note_section=self)
         self.end_button = EndButton(note_section=self)
         self.loop_button_end = LoopButton(note_section=self)
-        self.outline = Grid(1, 1, parent=self, color=color.dark_gray, z=-.2, thickness=4)
-        self.grid = Grid(
-            4 * round(self.note_area.scale_x),
-            16,
+        self.outline = Entity(model=Grid(1, 1), parent=self, color=color.dark_gray, z=-.2, thickness=4)
+        self.grid = Entity(
+            model=Grid(4 * round(self.note_area.scale_x), 16),
             parent = self.note_area,
             z = -2.2,
             color = color.tint(self.color, .1))
