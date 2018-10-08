@@ -1,5 +1,4 @@
 from ursina import *
-from direct.interval.IntervalGlobal import Sequence, Func, Wait, SoundInterval
 from note import Note, FakeNote
 import snapsettings
 from end_button import EndButton
@@ -52,6 +51,11 @@ class NoteSection(Draggable):
         self.sounds = list()
         self.playing = False
 
+        # self.instrument = 'violin-n72'
+        self.instrument = '0DefaultPiano_n48'
+        self.attack = 0
+        self.falloff = .5
+
 
     def input(self, key):
         super().input(key)
@@ -89,9 +93,9 @@ class NoteSection(Draggable):
         self.playing_notes = list()
         self.sounds = list()
 
-        for note in (self.note_parent.children + self.fake_notes_parent.children):
-            self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
-            self.sound.set_play_rate((note.y * 8 * 1.05946309436))
+        for note in [n for n in (self.note_parent.children + self.fake_notes_parent.children) if n.type == 'Note']:
+            # self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
+            # self.sound.set_play_rate((note.y * 8 * 1.05946309436))
 
             # s = Sequence()
             # # print('wait:',(note.x * 2), (note.y * 8 * 1.05946309436))
@@ -103,6 +107,12 @@ class NoteSection(Draggable):
 
             s = invoke(self.play_note, note_num, delay=note.x)
             self.playing_notes.append(s)
+            s = invoke(self.stop_note, note_num, delay=note.x+note.length)
+            self.playing_notes.append(s)
+
+        print('stop after:', self.scale_x)
+        s = invoke(self.stop, delay=self.scale_x)
+        self.playing_notes.append(s)
 
         for s in self.playing_notes:
             s.start()
@@ -111,7 +121,7 @@ class NoteSection(Draggable):
 
 
     def stop(self):
-        print('stop')
+        print('stop notesection')
         for s in self.playing_notes:
             s.finish()
         self.playing = False
@@ -132,11 +142,11 @@ class NoteSection(Draggable):
 
     def play_note(self, i, volume=1):
         # todo find closest
-        # print('play note:', number)
+        print('play note:', i)
         # sound = loader.loadSfx("0DefaultPiano_n48.wav")
-        distance = 72 - i
+        distance = 48 - i
         self.sounds.append(Audio(
-            'violin-n72',
+            self.instrument,
             pitch = pow(1 / 1.05946309436, distance),
             volume = volume,
             i = i
@@ -145,7 +155,7 @@ class NoteSection(Draggable):
     def stop_note(self, i):
         for s in self.sounds:
             if s.i == i:
-                s.stop()
+                s.fade_out(duration=self.falloff)
                 self.sounds.remove(s)
 
 
@@ -225,5 +235,3 @@ if __name__ == '__main__':
     t.add_note(.5, 3/16)
     t.add_note(.75, 2/16)
     app.run()
-
-Audio('ritual_main_menu').play()

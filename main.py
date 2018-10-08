@@ -30,7 +30,7 @@ class Amvol(Entity):
     #
     #     )
 
-
-app = Ursina()
-amvol = Amvol()
-app.run()
+if __name__  == '__main__':
+    app = Ursina()
+    amvol = Amvol()
+    app.run()
