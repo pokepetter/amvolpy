@@ -9,7 +9,7 @@ class Keyboard(Entity):
         super().__init__()
         allkeys = 'zxcvbnmasdfghjklqwertyuiop1234567890'
         self.keys = [char for char in allkeys]
-        print(base.scalechanger.scale)
+        printvar(base.scalechanger.scale)
         self.octave_offset = 0
 
         self.note_names = ("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B","C", "C#")
@@ -24,6 +24,7 @@ class Keyboard(Entity):
 
         try:
             self.player = midi.Input(midi.get_default_input_id())
+            print('found connected midi controller:', self.player)
         except:
             print('no midi controller found')
 
@@ -42,7 +43,7 @@ class Keyboard(Entity):
         # print('yolo')
         note_num = i + (self.octave_offset * len(base.scalechanger.scale))
         note_num = base.scalechanger.note_offset(note_num)
-        print('stop note', base.notesheet.prev_selected)
+        # print('stop note', base.notesheet.prev_selected)
         if base.notesheet.prev_selected:
             base.notesheet.prev_selected.stop_note(note_num)
             # print('played note')
@@ -75,11 +76,17 @@ class Keyboard(Entity):
 
     def update(self):
         if not self.player:
+            try:
+                self.player = midi.Input(midi.get_default_input_id())
+                # print('found connected midi controller:', self.player)
+            except:
+                pass
+
             return
 
         midi_events = self.player.read(10)
         # midi_evs = midi.midis2events(midi_events, self.player.device_id)
-        # print(midi_evs)
+        # print(midi_events)
         try:
             if midi_events:
                 # print(midi_events)
@@ -88,7 +95,7 @@ class Keyboard(Entity):
                     # 0:?, 1:note, 2:velocity
                     if e[0][0] == 149: # note
                         if e[0][2] > 0:
-                            print('note on:', e[0][1], 'vel:', e[0][2])
+                            # print('note on:', e[0][1], 'vel:', e[0][2])
                             self.play_note(e[0][1], velocity=e[0][2]/128)
                         else:
                             pass
@@ -118,12 +125,6 @@ class Keyboard(Entity):
             child.text = self.note_names[base.scalechanger.note_offset(i, True)] + str(i // len(base.scalechanger.scale))
 
 
-if __name__ == '__main__':
-    app = Ursina()
-    from scalechanger import ScaleChanger
-    app.scalechanger = ScaleChanger()
-    kb = Keyboard()
-    app.run()
 
     #                 instrumentChanger.PlayNote(i + (octaveOffset * octaveLength), Random.Range(0.8f, 0.9f))
     #                 overlays[i + (octaveOffset * octaveLength)].SetActive(true)

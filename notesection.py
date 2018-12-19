@@ -16,18 +16,11 @@ class NoteSection(Draggable):
             base.notesheet.note_sections.append(self)
         except:
             pass
-            # print('no notesheet')
         self.name = 'notesection'
         self.parent = scene
-        # self.require_key = 'shift'
-        # self.model = 'quad'
         self.origin = (-.5, -.5)
-        # self.color = color.color(0, 0, .06)
         self.color = color.color(0,0,.1)
         self.highlight_color = color.tint(self.color, .05)
-
-        self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
-        self.octave = 0
 
         self.note_parent = Entity(parent=self)
         self.fake_notes_parent = Entity(parent=self.note_parent)
@@ -35,25 +28,29 @@ class NoteSection(Draggable):
             note_section = self,
             parent = self.note_parent,
             color = color.color(1, 1, 0, .2),
-            origin = (-.5, -.5, .1)
+            origin = (-.5, -.5, .1),
             )
         self.play_button = PlayButton(note_section=self)
         self.end_button = EndButton(note_section=self)
         self.loop_button_end = LoopButton(note_section=self)
         self.outline = Entity(model=Grid(1, 1), parent=self, color=color.dark_gray, z=-.2, thickness=4)
         self.grid = Entity(
-            model=Grid(4 * round(self.note_area.scale_x), 16),
+            model=Grid(4 * round(self.note_area.scale_x), 32),
             parent = self.note_area,
             z = -2.2,
-            color = color.tint(self.color, .1))
+            color = color.tint(self.color, .1),
+            y = (1/32/2)
+            )
+
+        self.instrument_panel = InstrumentPanel(note_section=self)
 
         self.sounds = list()
         self.playing = False
-
-        # self.instrument = 'violin-n72'
-        self.instrument = '0DefaultPiano_n48'
+        self.octave = 0
+        self.instrument = 'samples/UoIowaPiano_n48'
+        # self.instrument = 'samples/violin-n72'
         self.attack = 0
-        self.falloff = .5
+        self.falloff = 4
 
 
     def input(self, key):
@@ -93,14 +90,6 @@ class NoteSection(Draggable):
         self.sounds = list()
 
         for note in [n for n in (self.note_parent.children + self.fake_notes_parent.children) if n.type == 'Note']:
-            # self.sound = loader.loadSfx("0DefaultPiano_n48.wav")
-            # self.sound.set_play_rate((note.y * 8 * 1.05946309436))
-
-            # s = Sequence()
-            # # print('wait:',(note.x * 2), (note.y * 8 * 1.05946309436))
-            # s.append(Wait((note.x * 2)))
-            # # s.append(SoundInterval(self.sound))
-            # s.append()
             note_num = int(note.y * 16) + (self.octave * 16)
             note_num = base.scalechanger.note_offset(note_num)
 
@@ -120,7 +109,7 @@ class NoteSection(Draggable):
 
 
     def stop(self):
-        print('stop notesection')
+        # print('stop notesection')
         for s in self.playing_notes:
             s.finish()
         self.playing = False
@@ -141,20 +130,20 @@ class NoteSection(Draggable):
 
     def play_note(self, i, volume=1):
         # todo find closest
-        print('play note:', i)
+        # print('play note:', i)
         # sound = loader.loadSfx("0DefaultPiano_n48.wav")
-        distance = 48 - i
-        self.sounds.append(Audio(
-            self.instrument,
-            pitch = pow(1 / 1.05946309436, distance),
-            volume = volume,
-            i = i
-            ))
+
+
+        distance = self.sample_note - i
+        a = Audio(self.instrument, pitch=pow(1 / 1.05946309436, distance), volume=0, i=i)
+        a.fade_in(value=volume, duration=self.attack, curve='linear')
+        self.sounds.append(a)
 
     def stop_note(self, i):
         for s in self.sounds:
             if s.i == i:
-                s.fade_out(duration=self.falloff)
+                # print('stop note:', i)
+                s.fade_out(duration=self.falloff, curve='linear')
                 self.sounds.remove(s)
 
 
@@ -190,6 +179,22 @@ class NoteSection(Draggable):
     def notes(self):
         return [c for c in self.note_parent.children if c.type == 'Note']
 
+    @property
+    def instrument(self):
+        return self._instrument
+
+    @instrument.setter
+    def instrument(self, value):
+        self._instrument = value
+        self.sample_note = 48
+        # search for n followed by number to get the sample's note
+        sample_info = self.instrument.split('_')
+        for line in sample_info:
+            if line.startswith('n'):
+                if int(line[1:]):
+                    # print('found start note:', int(line[1:]))
+                    self.sample_note = int(line[:1])
+
 
     def on_destroy(self):
         print('desrtoy')
@@ -221,12 +226,25 @@ class NoteArea(Button):
 
 
 
+class InstrumentPanel(Button):
+    def __init__(self, note_section, **kwargs):
+        super().__init__(**kwargs)
+        self.note_section = note_section
+        self.parent = note_section
+        self.origin = note_section.origin
+        self.color = color.white66
+        self.highlight_color = self.color
+
+    def input(self, key):
+        self.z = -held_keys['left shift'] * 2
+        # print(held_keys['left shift'])
+
 
 if __name__ == '__main__':
     app = Ursina()
     window.color = color.color(0, 0, .12)
     camera.orthographic = True
-    camera.fov = 10
+    camera.fov = 4
 
     t = NoteSection()
     t.add_note(0, 1/16)

@@ -20,13 +20,13 @@ class NoteSheet(Entity):
         self.origin = (-.5, -.5)
         self.collider = 'box'
 
-        self.highlight = Entity(
-            origin = (-.5, -.5),
-            z = -.2
-            )
-        self.highlight.model = Mesh(verts=((0,0,0), (1,0,0), (1,1,0), (0,1,0), (0,0,0)), mode='lines', thickness=2)
-        self.highlight.color = color.white33
-        self.highlight.reparent_to(self)
+        # self.highlight = Entity(
+        #     world_parent = self,
+        #     model = Quad(mode='lines', thickness=2),
+        #     color = color.white33,
+        #     origin = (-.5, -.5),
+        #     z = -.2
+        #     )
 
         self.indicator = Entity(
             model = 'quad',
@@ -104,10 +104,10 @@ class NoteSheet(Entity):
             # print(time.time() - self.start_time)
             self.indicator.x = self.indicator_start_x + (time.time() - self.start_time) / 4 / 4 / 2
 
-        self.highlight.enabled = self.hovered
-        if self.hovered:
-            self.highlight.x = int(mouse.point[0] * self.scale_x) / self.scale_x
-            self.highlight.y = int(mouse.point[1] * self.scale_y) / self.scale_y
+        # self.highlight.enabled = self.hovered
+        # if self.hovered:
+        #     self.highlight.x = int(mouse.point[0] * self.scale_x) / self.scale_x
+        #     self.highlight.y = int(mouse.point[1] * self.scale_y) / self.scale_y
 
 
         # panning
@@ -117,7 +117,6 @@ class NoteSheet(Entity):
 
             camera.x = max(camera.x, 0)
             camera.y = max(camera.y, 0)
-
 
 
 

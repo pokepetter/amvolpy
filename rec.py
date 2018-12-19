@@ -12,7 +12,7 @@ class Rec(Entity):
             parent = self,
             origin = (0, -.5),
             z = -1,
-            model = Mesh(verts=((0,0,0), (0,1,0)), mode='lines'),
+            model = Mesh(vertices=((0,0,0), (0,1,0)), mode='lines'),
             color = color.cyan,
             )
         self.indicator_start_x = 0
@@ -39,12 +39,17 @@ class Rec(Entity):
         self.rec_note_sections = list()
         self.indicator_start_x = self.indicator.x
 
-        for i in range(4):
-            self.notesection = base.notesheet.create_note_section(0,i/64)
-            self.notesection.octave = i
-            self.notesection.end_button.x = 100
-            invoke(self.notesection.end_button.drop, delay=.001) # have to add delay or panda3d will crash for some reason :S
-            self.rec_note_sections.append(self.notesection)
+        self.note_section = base.notesheet.create_note_section(0,0/64)
+        self.note_section.end_button.x = 100
+        # self.notesection.octave = 0
+        invoke(self.note_section.end_button.drop, delay=.001) # have to add delay or panda3d will crash for some reason :S
+        self.rec_note_sections.append(self.note_section)
+        # for i in range(4):
+        #     self.notesection = base.notesheet.create_note_section(0,i/64)
+        #     self.notesection.octave = i
+        #     self.notesection.end_button.x = 100
+        #     invoke(self.notesection.end_button.drop, delay=.001) # have to add delay or panda3d will crash for some reason :S
+        #     self.rec_note_sections.append(self.notesection)
         self.recording = True
 
 
@@ -71,7 +76,8 @@ class Rec(Entity):
                     print('pressed:', i, 'add note to octave:', octave, 'at postition:', i-(octave*16))
                     i = i - (octave * 16)
                     printvar(i)
-                    note = self.rec_note_sections[octave].add_note(
+                    # note = self.rec_note_sections[octave].add_note(
+                    note = self.note_section.add_note(
                         x = 0,  # set world_x later
                         y = i / 16,
                         strength = 1,
@@ -84,7 +90,8 @@ class Rec(Entity):
                     # note_num = i + (base.keyboard.octave_offset * len(base.scalechanger.scale))
                     # note_num = base.scalechanger.note_offset(note_num)
                     octave = i//16
-                    ns = self.rec_note_sections[octave]
+                    # ns = self.rec_note_sections[octave]
+                    ns = self.note_section
                     fresh_notes = [n for n in ns.notes if n.length == 0]
                     # print('||||||||', i, [int(n.y * 16) for n in fresh_notes])
                     fresh_notes = [n for n in fresh_notes if int(n.y * 16) == i-(16 * octave)]

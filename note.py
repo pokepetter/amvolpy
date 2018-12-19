@@ -1,10 +1,11 @@
 from ursina import *
 import snapsettings
 
+# Circle().save_to_bam('note_circle')
 
 class Note(Entity):
-    def __init__(self, x=0, y=0, length=.25, strength=.6):
-        super().__init__()
+    def __init__(self, length=.25, strength=.6, **kwargs):
+        super().__init__(**kwargs)
         self.model = 'quad'
         self.rotation_z = 45
         self.scale *= .1
@@ -13,6 +14,7 @@ class Note(Entity):
         self.model = None
 
         self.circle = Entity(
+            # model = 'note_circle',
             model = Circle(),
             parent = self,
             color = color.lime,
@@ -31,8 +33,6 @@ class Note(Entity):
         self.press_time = 0
         self.max_circle_size = self.circle.scale
 
-        self.x = x
-        self.y = y
         self.length = length
         self.strength = strength
 
@@ -58,7 +58,8 @@ class Note(Entity):
 
     @property
     def color(self):
-        return self.circle.color
+        if hasattr(self, 'circle'):
+            return self.circle.color
 
     @color.setter
     def color(self, value):
@@ -93,3 +94,9 @@ class FakeNote(Note):
         pass
     def update(self):
         pass
+
+
+
+if __name__ == '__main__':
+    Ursina()
+    Note()
