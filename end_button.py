@@ -26,7 +26,7 @@ class EndButton(Draggable):
 
     def drop(self):
         self.world_x = round(self.world_x * 4) / 4
-        # print('drop end button', self.world_x - self.note_section.world_x)
+        print('drop end button', self.world_x - self.note_section.world_x)
         self.note_section.note_area.scale_x = self.world_x - self.note_section.world_x
 
         if self.world_x > self.note_section.world_x + self.note_section.scale_x:

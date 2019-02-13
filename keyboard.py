@@ -34,7 +34,7 @@ class Keyboard(Entity):
         note_num = base.scalechanger.note_offset(note_num)
         # print('try plast note', base.notesheet.prev_selected)
         if base.notesheet.prev_selected:
-            base.notesheet.prev_selected.play_note(note_num, velocity)
+            base.notesheet.prev_selected.play_note(note_num, velocity, show_overlay=True)
             # print('played note')
             if i < len(self.children):
                 self.children[i].color = color.lime
@@ -85,7 +85,7 @@ class Keyboard(Entity):
             return
 
         midi_events = self.player.read(10)
-        # midi_evs = midi.midis2events(midi_events, self.player.device_id)
+        midi_evs = midi.midis2events(midi_events, self.player.device_id)
         # print(midi_events)
         try:
             if midi_events:
@@ -93,7 +93,8 @@ class Keyboard(Entity):
                 for e in midi_events:
                     # print(e[0])
                     # 0:?, 1:note, 2:velocity
-                    if e[0][0] == 149: # note
+                    # if e[0][0] == 149: # note
+                    if e[0][0] == 144: # note
                         if e[0][2] > 0:
                             # print('note on:', e[0][1], 'vel:', e[0][2])
                             self.play_note(e[0][1], velocity=e[0][2]/128)

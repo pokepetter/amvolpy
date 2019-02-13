@@ -29,6 +29,7 @@ class NoteSection(Draggable):
             parent = self.note_parent,
             color = color.color(1, 1, 0, .2),
             origin = (-.5, -.5, .1),
+            scale_y = 4,
             )
         self.play_button = PlayButton(note_section=self)
         self.end_button = EndButton(note_section=self)
@@ -39,16 +40,26 @@ class NoteSection(Draggable):
             parent = self.note_area,
             z = -2.2,
             color = color.tint(self.color, .1),
-            y = (1/32/2)
+            y = (1/32/2),
+            scale_y = 1/4
             )
 
+        self.border = Entity(
+            parent = self.note_area,
+            model = Quad(subdivisions=0, mode='lines', thickness=2),
+            z = -10,
+            origin=(-.5,-.5),
+            enabled = False
+            )
+        # self.border = Entity(parent=self.note_area, model=Quad(), z=-3, origin=(-.5,-.5))
         self.instrument_panel = InstrumentPanel(note_section=self)
+        self.overlays = dict()
 
         self.sounds = list()
         self.playing = False
         self.octave = 0
-        self.instrument = 'samples/UoIowaPiano_n48'
-        # self.instrument = 'samples/violin-n72'
+        # self.instrument = 'samples/UoIowaPiano_n48'
+        self.instrument = 'samples/0DefaultPiano_n48'
         self.attack = 0
         self.falloff = 4
 
@@ -60,6 +71,7 @@ class NoteSection(Draggable):
             if key == 'c':
                 self.crop()
 
+
         # redraw after deleting note
         if key == 'right mouse up':
             self.draw_fake_notes()
@@ -67,6 +79,17 @@ class NoteSection(Draggable):
         if self.hovered or self.note_area.hovered:
             if key == 'delete':
                 destroy(self)
+
+        # selecting
+        if key == 'left mouse down':
+            if not held_keys['shift']:
+                if self.hovered and hasattr(base, 'notesheet'):
+                    for ns in base.notesheet.note_sections:
+                        ns.selected = False
+
+                    self.selected = True
+                else:
+                    self.selected = False
 
 
     def drag(self):
@@ -109,10 +132,11 @@ class NoteSection(Draggable):
 
 
     def stop(self):
-        # print('stop notesection')
-        for s in self.playing_notes:
-            s.finish()
-        self.playing = False
+        if self.playing:
+            # print('stop notesection')
+            for s in self.playing_notes:
+                s.finish()
+            self.playing = False
 
 
     def add_note(self, x=0, y=0, strength=1, length=1/4):
@@ -122,17 +146,27 @@ class NoteSection(Draggable):
         n.length = length
         n.reparent_to(self.note_parent)
         n.position = (round(x * snapsettings.position_snap) / snapsettings.position_snap,
-                      round(y * snapsettings.position_snap) / snapsettings.position_snap,
+                      round(y/128 * snapsettings.position_snap) / snapsettings.position_snap,
                       -1)
         self.draw_fake_notes()
         return n
 
 
-    def play_note(self, i, volume=1):
+    def play_note(self, i, volume=1, show_overlay=False):
         # todo find closest
         # print('play note:', i)
         # sound = loader.loadSfx("0DefaultPiano_n48.wav")
-
+        if show_overlay:
+            self.overlays[str(i)] = Entity(
+                parent = self,
+                model  ='quad',
+                origin = (-.5,-.5),
+                color = color.white66,
+                y = i/64,
+                z = -2,
+                scale_y = 1/32
+                )
+            # destroy(particle, .2)
 
         distance = self.sample_note - i
         a = Audio(self.instrument, pitch=pow(1 / 1.05946309436, distance), volume=0, i=i)
@@ -146,6 +180,9 @@ class NoteSection(Draggable):
                 s.fade_out(duration=self.falloff, curve='linear')
                 self.sounds.remove(s)
 
+                if str(i) in self.overlays:
+                    destroy(self.overlays[str(i)])
+
 
     def draw_fake_notes(self):
         if self.note_area.scale_x == 0:
@@ -153,7 +190,7 @@ class NoteSection(Draggable):
             self.note_area.scale_x = max(.25, self.note_area.scale_x)
             # return
         destroy(self.fake_notes_parent)
-        self.fake_notes_parent = Entity(parent=self.note_parent)
+        self.fake_notes_parent = Entity(parent=self.note_parent,z=-1)
         # print('loops:', self.scale_x / self.note_area.scale_x)
 
         # disable out of bounds notes
@@ -161,18 +198,24 @@ class NoteSection(Draggable):
             n.enabled = n.x < self.note_area.scale_x
 
         # draw fake notes for loops
+        verts = list()
         for i in range(1, math.ceil(self.scale_x / self.note_area.scale_x)):
-            for n in [n for n in self.notes if n.x < self.note_area.scale_x]:
+            for n in [n for n in self.notes if n.x <= self.note_area.scale_x]:
                 if n.x + (i * self.note_area.scale_x) >= self.scale_x:
                     break
-                clone = FakeNote()
-                clone.strength = n.strength
-                clone.length = n.length
-                clone.color = color.color(60, .5, .5, 1)
-                clone.reparent_to(self.fake_notes_parent)
-                clone.x = n.x + (i * self.note_area.scale_x)
-                clone.y = n.y
-                clone.z = -.1
+
+                verts.append((n.x + (i * self.note_area.scale_x), n.y, 0))
+                verts.append((n.x + (i * self.note_area.scale_x) + n.length, n.y, 0))
+                # clone.length = n.length
+        self.fake_notes_parent.model = Mesh(vertices=verts, mode='line', thickness=5)
+        self.fake_notes_parent.color = color.color(60, .5, .5, 1)
+        points = duplicate(self.fake_notes_parent)
+        points.parent = self.fake_notes_parent
+        points.model.vertices = verts[::2]  # every other item
+        points.model.mode = 'point'
+        points.model.thickness = 10
+        points.model.generate()
+
 
 
     @property
@@ -195,6 +238,15 @@ class NoteSection(Draggable):
                     # print('found start note:', int(line[1:]))
                     self.sample_note = int(line[:1])
 
+    @property
+    def selected(self):
+        return self._selected
+
+    @selected.setter
+    def selected(self, value):
+        self._selected = value
+        self.border.enabled = value
+
 
     def on_destroy(self):
         print('desrtoy')
@@ -210,9 +262,6 @@ class NoteArea(Button):
         self.highlight_color = self.color
         self.z = 2
 
-    def on_click(self):
-        if held_keys['control']:
-            self.note_section.add_note(mouse.point[0], mouse.point[1])
 
     def input(self, key):
         if key == 'control':
@@ -223,6 +272,9 @@ class NoteArea(Button):
         elif key == 'control up':
             self.z = 2
             self.note_section.grid.z -= 2
+
+        if self.hovered and held_keys['control'] and key == 'left mouse up':
+            self.note_section.add_note(mouse.point[0], mouse.point[1]*32)
 
 
 
@@ -242,13 +294,15 @@ class InstrumentPanel(Button):
 
 if __name__ == '__main__':
     app = Ursina()
+    from scalechanger import ScaleChanger
+    app.scale_changer = ScaleChanger
     window.color = color.color(0, 0, .12)
     camera.orthographic = True
     camera.fov = 4
 
     t = NoteSection()
-    t.add_note(0, 1/16)
-    t.add_note(.25, 2/16)
-    t.add_note(.5, 3/16)
-    t.add_note(.75, 2/16)
+    t.add_note(0, 1)
+    t.add_note(.25, 2)
+    t.add_note(.5, 3)
+    t.add_note(.75, 2)
     app.run()

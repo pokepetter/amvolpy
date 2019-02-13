@@ -2,7 +2,7 @@ from ursina import *
 from notesection import NoteSection
 import time
 
-scroll_sensitivity = 5
+scroll_sensitivity = 1
 pan_sensitivity = 1
 
 class NoteSheet(Entity):

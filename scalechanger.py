@@ -9,6 +9,7 @@ class ScaleChanger(Entity):
 
         self.final_offsets = list()
         self.scale = (2, 2, 1, 2, 2, 3)
+        self.scale = (1,)*12
         # self.scale = (2,1,2,2,2,1,2)
 
 
