@@ -1,6 +1,8 @@
 from ursina import *
-from notesection import NoteSection
+from note_section import NoteSection
 import time
+import sys
+
 
 scroll_sensitivity = 1
 pan_sensitivity = 1
@@ -13,7 +15,7 @@ class NoteSheet(Entity):
         self.model = 'quad'
         self.texture = 'white_cube'
 
-        self.scale = (256, 64)
+        # self.scale = (256, 64)
         self.texture_scale = (self.scale_x, self.scale_y)
 
         self.color = color.gray
@@ -92,7 +94,7 @@ class NoteSheet(Entity):
         ns.x = int(x * self.scale_x)
         ns.y = int(y * self.scale_y)
         ns.z = -.1
-        self.prev_selected = ns
+        # self.prev_selected = ns
 
         target_scale_y = ns.scale_y
         ns.scale_y = 0
@@ -119,10 +121,12 @@ class NoteSheet(Entity):
             camera.y = max(camera.y, 0)
 
 
+sys.modules['notesheet'] = NoteSheet()
+
 
 if __name__ == '__main__':
     app = Ursina()
     camera.orthographic = True
-    camera.fov = 10
-    sheet = NoteSheet()
+    # camera.fov = 10
+    # sheet = NoteSheet()
     app.run()

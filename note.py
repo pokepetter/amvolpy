@@ -1,102 +1,19 @@
-from ursina import *
-import snapsettings
+class Note:
 
-# Circle().save_to_bam('note_circle')
+    default_length = .125
 
-class Note(Entity):
-    def __init__(self, length=.25, strength=.6, **kwargs):
-        super().__init__(**kwargs)
-        self.model = 'quad'
-        self.rotation_z = 45
-        self.scale *= .1
-        self.z = -.1
-        self.collider = 'box'
-        self.model = None
-
-        self.circle = Entity(
-            # model = 'note_circle',
-            model = Circle(),
-            parent = self,
-            color = color.lime,
-            z = -.1,
-        )
-
-        self.length_indicator = Entity(
-            parent = self,
-            model = 'quad',
-            origin = (-.5, 0),
-            rotation_z = -45,
-            color = self.circle.color,
-            scale_y = .2
-        )
-
-        self.press_time = 0
-        self.max_circle_size = self.circle.scale
-
+    def __init__(self, x, y, length=default_length, strength=1):
+        self.x = x
+        self.y = y
         self.length = length
         self.strength = strength
 
 
-    @property
-    def length(self):
-        return self._length
-
-    @length.setter
-    def length(self, value):
-        value = max(0, value)
-        self._length = value
-        self.length_indicator.scale_x = value * 10
-
-    @property
-    def strength(self):
-        return self._strength
-
-    @strength.setter
-    def strength(self, value):
-        self._strength = clamp(value, .2, 1)
-        self.circle.scale = Point3(1,1,1) * (self._strength + .2) * .5
-
-    @property
-    def color(self):
-        if hasattr(self, 'circle'):
-            return self.circle.color
-
-    @color.setter
-    def color(self, value):
-        self.circle.color = value
-        self.length_indicator.color = value
-
-
-    def update(self):
-        self.press_time += time.dt
-        if self.press_time >= snapsettings.add_length_snap:
-            if mouse.left and self.hovered:
-                self.length += snapsettings.add_length_snap
-            if mouse.right and self.hovered:
-                self.length -= snapsettings.add_length_snap
-
-            self.press_time = 0
-
-
-    def input(self, key):
-        if self.hovered:
-            if key == 'scroll up':
-                self.strength += .2
-            elif key == 'scroll down':
-                self.strength -= .2
-
-            if key == 'right mouse down':
-                destroy(self)
-
-
-class FakeNote(Note):
-    def input(self, key):
-        pass
-    def update(self):
-        pass
+    def __str__(self):
+        # return f'Note(x={self.x}, y={self.y}, length={self.length}, strength={self.strength})'
+        return f'Note({self.x}, {self.y}, {self.length}, {self.strength})'
 
 
 
 if __name__ == '__main__':
-    Ursina()
-    Note()
+    print(Note(0,0))

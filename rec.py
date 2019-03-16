@@ -69,7 +69,7 @@ class Rec(Entity):
         if not held_keys['control'] and self.recording:
             for i, k in enumerate(base.keyboard.keys):
                 if key == k:
-                    note_num = i + (base.keyboard.octave_offset * len(base.scalechanger.scale))
+                    note_num = i + (base.keyboard.octave_offset * len(base.scalechanger.note_scale))
                     note_num = base.scalechanger.note_offset(note_num)
 
                     octave = (note_num // 32)
@@ -87,7 +87,7 @@ class Rec(Entity):
 
                 if key == k + ' up':
                     print('stop:', i)
-                    # note_num = i + (base.keyboard.octave_offset * len(base.scalechanger.scale))
+                    # note_num = i + (base.keyboard.octave_offset * len(base.scalechanger.note_scale))
                     # note_num = base.scalechanger.note_offset(note_num)
                     octave = i//16
                     # ns = self.rec_note_sections[octave]
