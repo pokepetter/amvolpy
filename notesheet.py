@@ -12,16 +12,18 @@ class NoteSheet(Entity):
     def __init__(self):
         super().__init__()
         self.name = 'notesheet'
-        self.model = 'quad'
-        self.texture = 'white_cube'
-
-        # self.scale = (256, 64)
-        self.texture_scale = (self.scale_x, self.scale_y)
-
-        self.color = color.gray
-        self.origin = (-.5, -.5)
-        self.collider = 'box'
-
+        self.playing = False
+        self.bg = Entity(
+            parent = self,
+            # model = 'quad',
+            # model = Quad(radius=.001, mode='lines'),
+            # texture = 'white_cube',
+            scale = (256, 64),
+            texture_scale = (256, 64),
+            # color = window.color.tint(.10),
+            origin = (-.5, -.5),
+            collider = 'box'
+            )
         # self.highlight = Entity(
         #     world_parent = self,
         #     model = Quad(mode='lines', thickness=2),
@@ -42,7 +44,6 @@ class NoteSheet(Entity):
         self.note_sections = list()
         self.prev_selected = None
 
-        self.playing = False
         self.recording = False
         self.start_time = time.time()
         self.indicator_start_x = self.indicator.x
@@ -59,10 +60,16 @@ class NoteSheet(Entity):
 
 
     def input(self, key):
+        # if key == 'scroll down':
+        #     camera.fov += scroll_sensitivity
+        # if key == 'scroll up':
+        #     camera.fov -= scroll_sensitivity
+
         if key == 'scroll down':
-            camera.fov += scroll_sensitivity
+            self.scale_x -= .1
+            self.scale_x = max(self.scale_x, .1)
         if key == 'scroll up':
-            camera.fov -= scroll_sensitivity
+            self.scale_x += .1
 
         if key == 'space':
             if self.recording:
@@ -72,8 +79,8 @@ class NoteSheet(Entity):
             else:
                 self.stop()
 
-        if key == 'double click' and self.hovered:
-            self.create_note_section(mouse.point[0], mouse.point[1])
+        if key == 'double click' and self.bg.hovered:
+            self.create_note_section(mouse.point[0]*self.bg.scale_x, mouse.point[1]*self.bg.scale_y)
 
 
     def play(self):
@@ -106,10 +113,6 @@ class NoteSheet(Entity):
             # print(time.time() - self.start_time)
             self.indicator.x = self.indicator_start_x + (time.time() - self.start_time) / 4 / 4 / 2
 
-        # self.highlight.enabled = self.hovered
-        # if self.hovered:
-        #     self.highlight.x = int(mouse.point[0] * self.scale_x) / self.scale_x
-        #     self.highlight.y = int(mouse.point[1] * self.scale_y) / self.scale_y
 
 
         # panning
@@ -123,8 +126,8 @@ class NoteSheet(Entity):
 
 sys.modules['notesheet'] = NoteSheet()
 
-
 if __name__ == '__main__':
+    from ursina import *
     app = Ursina()
     camera.orthographic = True
     # camera.fov = 10

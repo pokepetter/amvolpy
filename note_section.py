@@ -2,8 +2,10 @@ from ursina import *
 from note import Note
 from end_button import EndButton
 from loop_button import LoopButton
+from amvol_tooltip import AmvolTooltip as Tooltip
 import scalechanger
 import save_system
+from ursina.prefabs.radial_menu import RadialMenu, RadialMenuButton
 
 
 class NoteSection(Draggable):
@@ -24,22 +26,23 @@ class NoteSection(Draggable):
 
 
     def __init__(self, **kwargs):
-        super().__init__(parent=scene, model='quad', color=color.black33)
+        super().__init__(parent=scene, model='quad', color=color.color(random.uniform(0,360), .5, .6), z=-1)
         try:
             import notesheet
-            parent = notesheet
+            self.world_parent = notesheet
         except:
             pass
         self.highlight_color = self.color
         self.origin = (-.5, -.5)
 
         self.notes = list()
-        self.note_parent = Entity(parent=self, color=color.lime, z=-.1, model=Mesh(vertices=(), mode='triangle', thickness=camera.fov*2))
-        self.note_loops = Entity(parent=self.note_parent, color=color.gray, z=-.1, model=Mesh(vertices=(), mode='triangle', thickness=camera.fov*2))
+        self.note_parent = Entity(parent=self, color=color.smoke, z=-.1, model=Mesh(vertices=(), mode='triangle', thickness=camera.fov*2))
+        self.note_loops = Entity(parent=self.note_parent, color=self.color.tint(.3), z=-.1, model=Mesh(vertices=(), mode='triangle', thickness=camera.fov*2))
         self.loop_lines = Entity(parent=self, color=color.azure, z=-.1, model=Mesh(vertices=(), mode='line', thickness=camera.fov*.5))
         self.height = 32
         self.scale_y = self.height / 32
-        self.grid = Entity(parent=self, model=Grid(1, self.height), z=-.1, color=color.dark_gray)
+        self.grid = Entity(parent=self, model=Grid(1, self.height), z=-.1, color=color.white33, enabled=False)
+        self.outline = Entity(parent=self, model=Quad(mode='line', segments=0), origin=(-.5,-.5), z=-1)
         self.scroll = 0
         self.scroll_speed = 5
         self.scroll_indicator = Entity(parent=self, model='quad', scale=(1/64, 1/16), color=color.gray, origin=(.5, -.5))
@@ -47,19 +50,30 @@ class NoteSection(Draggable):
         self.loop_number = Text(parent=self, text='1', origin=(.6, -.4), scale=(3,3/self.scale_y), color=color.white33, y=.1)
         self.end_button = EndButton(self)
         self.loop_button = LoopButton(self)
+        # self.play_button = Button(parent=self.grid, text='>', scale=.1, color=color.azure, origin=(-.5,-.5), position=(0,1,-.1), tooltip=Tooltip('Play'))
+        self.right_click_menu = RadialMenu(
+            (
+                RadialMenuButton(text='>', on_click=self.play),
+                RadialMenuButton(text='x', on_click=self.stop, color=color.red, scale=.5),
+            ),
+            enabled=False
+            )
 
         self.current_note = None
         self.indicator = Entity(parent=self, model=Mesh(vertices=((0,0,0),(0,1,0)), mode='lines'), color=color.yellow, z=-1)
 
         self.sounds = list()
+        [setattr(e, 'selected', False) for e in scene.entities if 'NoteSection' in e.types]
+        NoteSection.overlay_parent.parent = self
         self.selected = True
+
         self.playing = False
         self.octave = 0
         self.sample_note = 48
-        # self.instrument = 'samples/UoIowaPiano_n48'
+        self.instrument = 'samples/UoIowaPiano_n48'
         # self.instrument = 'samples/0DefaultPiano_n48'
         # self.instrument = 'samples/violin-n72'
-        self.instrument = 'samples/Sin-n60-f100-loop'
+        # self.instrument = 'samples/Sin-n60-f100-loop'
         self.attack = .0
         self.falloff = 1
 
@@ -68,7 +82,7 @@ class NoteSection(Draggable):
 
 
     def update(self):
-        if held_keys['control']:
+        if not held_keys['control']:
             super().update()
 
         if self.hovered and mouse.left and self.current_note:   # drag note length
@@ -81,6 +95,17 @@ class NoteSection(Draggable):
         self.y = math.floor(self.y)
         self.x = math.floor(self.x)
 
+    def on_mouse_enter(self):
+        super().on_mouse_enter()
+        self.grid.enabled = True
+
+    def on_mouse_exit(self):
+        # if mouse.hovered_entity == self.play_button:
+        #     return
+
+        super().on_mouse_exit()
+        self.grid.enabled = False
+
 
     def input(self, key):
         super().input(key)
@@ -89,7 +114,7 @@ class NoteSection(Draggable):
         if key == 's':
             self.stop()
 
-        if self.hovered and not held_keys['control']:
+        if self.hovered and held_keys['control']:
             x = (mouse.point[0] / self.end_button.x) * self.scale_x / self.loops
             # adjust for clicking in a loop
             x -= math.floor(mouse.point[0] * self.loops) * (self.end_button.x * self.scale_x)
@@ -120,6 +145,9 @@ class NoteSection(Draggable):
             else:
                 self.selected = True
                 NoteSection.overlay_parent.parent = self
+
+        if self.hovered and key == 'right mouse down':
+            self.right_click_menu.enabled = True
 
 
     @property
@@ -152,6 +180,15 @@ class NoteSection(Draggable):
         t = value/128 * 2
         self.scroll_indicator.y = lerp(0, 1-self.scroll_indicator.scale_y, t)
         # print(self.scroll_indicator.y)
+
+    @property
+    def enabled(self):
+        return self._enabled
+
+    @enabled.setter
+    def enabled(self, value):
+        self._enabled = value
+        self.overlay.enabled = value
 
 
     def add_note(self, x, y, length=1/4, strength=1):
@@ -209,7 +246,7 @@ class NoteSection(Draggable):
         self.sounds = list()
         self.indicator.animate_x(1, duration=self.scale_x, curve=curve.linear)
 
-        active_notes = [n for n in self.notes if n.x <= self.end_button.x]
+        active_notes = [n for n in self.notes if n.x <= self.end_button.x * self.scale_x]
 
         for i in range(math.ceil(self.loops)):
             loop_delay = i * self.end_button.x * self.scale_x
@@ -219,6 +256,7 @@ class NoteSection(Draggable):
                     break
 
                 note_num = scalechanger.note_offset(note.y)
+                print(note_num, note.x)
                 s = invoke(self.play_note, note_num, delay=note.x + loop_delay)
                 self.playing_notes.append(s)
                 s = invoke(self.stop_note, note_num, delay=note.x+note.length + loop_delay)

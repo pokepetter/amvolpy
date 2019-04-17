@@ -29,24 +29,16 @@ class Keyboard(Entity):
             print('no midi controller found')
 
     def play_note(self, i, velocity=1):
-        import time
-        print('yolo')
-        t = time.time()
-
         note_num = i + (self.octave_offset * len(scalechanger.note_scale))
         note_num = scalechanger.note_offset(note_num)
-        # print('try plast note', base.notesheet.prev_selected)
         note_sections = [e for e in scene.entities if 'NoteSection' in e.types and e.selected and e != self.fallback_ns]
 
         if not note_sections:
             self.fallback_ns.play_note(note_num, velocity, show_overlay=False)
-            print('lag:', time.time() - t)
             return
 
         for ns in note_sections:
-            print('play note')
             ns.play_note(note_num, velocity, show_overlay=True)
-            print('played note')
             if i < len(self.children):
                 self.children[i].color = color.lime
 
