@@ -9,13 +9,16 @@ class LoopButton(Draggable):
             lock_y=True,
             scale=(.05, 1),
             origin_y=.5,
-            position=(1,1,-.2),
-            color=color.green,
+            position=(1,1,-.5),
+            color=color.color(120, 1, 1, .5),
             # min_x=1/16,
             step=1/16
             )
         self.note_section = note_section
 
+
+    def drag(self):
+        self.step = 1/16 / self.note_section.scale_x
 
     def drop(self):
         self.note_section.end_button.world_parent = scene
@@ -23,8 +26,7 @@ class LoopButton(Draggable):
         self.note_section.scale_x = max(self.note_section.scale_x, .05)
         self.note_section.scale_x = int(self.note_section.scale_x * 16) / 16
         self.x = 1
-        self.note_section.end_button.world_scale_x = .05
-        self.note_section.loop_button.world_scale_x = .05
         self.note_section.end_button.world_parent = self.note_section
+        self.note_section.instrument_settings.world_scale = 1
 
         self.note_section.draw_notes()

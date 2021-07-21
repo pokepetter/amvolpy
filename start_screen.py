@@ -1,8 +1,8 @@
 from ursina import *
 from ursina.prefabs.dropdown_menu import DropdownMenuButton
 from ursina.prefabs.input_field import InputField
-from window_panel import WindowPanel, Space
-
+from ursina.prefabs.window_panel import WindowPanel, Space
+import amvol
 
 
 class StartScreen(Entity):
@@ -15,9 +15,7 @@ class StartScreen(Entity):
         self.input_field = InputField(height=1)
 
         def create():
-            print('create')
-            self.load(self.input_field.text)
-            self.enabled = False
+            amvol.create(self.input_field.text)
 
         self.create_button = Button(text='Create', color=color.yellow, scale_x=.5, on_click=create)
 
@@ -37,36 +35,71 @@ class StartScreen(Entity):
         self.name_prompt.panel.color = color.panel_color
 
 
+        def name_prompt_close():
+            for input_field in [c for c in self.name_prompt.content if isinstance(c, InputField)]:
+                input_field.text = input_field.start_text
+
+        self.name_prompt.close = name_prompt_close
+        original_name_promt_scale = self.name_prompt.scale
+
         def ask_for_name():
-            original_scale = self.name_prompt.scale
             self.name_prompt.scale = 0
             self.name_prompt.enabled = True
-            self.name_prompt.bg.world_scale = (99,99)
-            self.name_prompt.fade_in(duration=.1)
-            self.name_prompt.animate_scale(original_scale, duration=.2)
-            self.name_prompt.content[0].editing = True
+            self.name_prompt.bg.enabled = True
+            self.name_prompt.animate_scale(original_name_promt_scale, duration=.2)
+            self.input_field.editing = True
 
         self.new_project_button = Button('New Project', parent=self, color=color.amvol_color, scale=(.3, .05), y=.05, on_click=ask_for_name)
-        self.open_button = Button('Open', parent=self, color=color.yellow, scale=(.3, .035), y=-.001)
+
+        self.load_menu = FileBrowser(parent=self, path=Path('amvol_projects'), file_types=('.amvol'), enabled=False)
+        def on_submit(selection):
+            for b in [e for e in selection if e.path.is_file()]:
+                amvol.load(b.path)
+
+        self.load_menu.on_submit = on_submit
+
+
+        def open_load_menu():
+            self.load_menu.enabled = True
+
+        self.open_button = Button('Open', parent=self, color=color.yellow, scale=(.3, .035), y=-.001, on_click=open_load_menu)
+
+
+        class OpenRecentButton(Button):
+            def on_click(self):
+                amvol.load(self.path)
 
         recent_files = open('recent_projects.txt').read().strip().split('\n')
         for i, f in enumerate(recent_files):
-            Button(
+            OpenRecentButton(
                 parent = self,
-                text = f,
+                text = Path(f).stem,
                 hovered_color = color.orange,
                 scale = (.4,.025),
-                text_origin = (-.5, 0),
-                y = -i*.025 -.075
+                # text_origin = (-.5, 0),
+                y = -i*.025 -.075,
+                path = Path(f)
                 )
 
 
         for key, value in kwargs.items():
             setattr(self, key ,value)
 
-    def load(self, name):
+
+    def on_enable(self):
+        import keyboard
+        keyboard.enabled = False
+        camera.ui.animate_scale(camera.ui.scale * 1.5, curve=curve.in_out_expo, duration=.15, delay=.05)
+
+
+    def close(self):
+        import keyboard
         camera.ui.animate_scale(camera.ui.scale / 1.5, curve=curve.in_out_expo, duration=.3)
-        print('load:', name)
+        keyboard.enabled = True
+        self.enabled = False
+
+
+
 
 if __name__ == '__main__':
     app = Ursina()
@@ -80,5 +113,6 @@ if __name__ == '__main__':
     color.amvol_color = amvol_color
     color.panel_color = panel_color
     color.record_color = record_color
-    StartScreen()
+    ss = StartScreen()
+    # invoke(ss.close, delay=4)
     app.run()

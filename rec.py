@@ -1,6 +1,8 @@
 from ursina import *
 from note_section import NoteSection
 import scalechanger
+import main
+
 
 parent = None
 types = list()
@@ -22,16 +24,14 @@ def start_recording():
     # current_note_section.indicator.animate
     current_note_section.play()
     recording = True
-    # invoke(setattr, main.stop_recording_button.enabled, True, delay=.3)
-    from main import record_button, stop_recording_button
-    record_button.enabled = False
-    stop_recording_button.enabled = True
+    main.stop_record_button.enabled = True
 
 
 def stop_recording():
     global current_note_section
     global recording
     # global indicator
+    main.stop_record_button.enabled = False
     recording = False
     current_note_section.end_button.x = current_note_section.indicator.x
     current_note_section.end_button.drop()
@@ -43,9 +43,6 @@ def stop_recording():
         destroy(current_note_section)
 
     current_note_section = None
-    from main import record_button, stop_recording_button
-    stop_recording_button.enabled = False
-    record_button.enabled = True
 
 
 
@@ -63,7 +60,7 @@ def input(key):
     elif recording:
         for i, k in enumerate(base.keyboard.keys):
             if key == k:
-                note_num = i + (base.keyboard.octave_offset * len(scalechanger.note_scale))
+                note_num = i + (base.keyboard.octave_offset * len(scalechanger.pattern))
                 note_num = scalechanger.note_offset(note_num)
 
                 x = current_note_section.indicator.x * current_note_section.scale_x
@@ -78,4 +75,4 @@ def input(key):
 
                 current_note_section.draw_notes()
 
-# scene.entities.append(sys.modules['rec'])
+scene.entities.append(sys.modules['rec'])

@@ -1,15 +1,2 @@
-spring
-test_1
-test_2
-orchestration_test
-winter
-spring
-test_1
-test_2
-orchestration_test
-winter
-spring
-test_1
-test_2
-orchestration_test
-winter
+D:\Sync\programming\software\amvolpy\amvol_projects\test3.amvol
+D:\Sync\programming\software\amvolpy\amvol_projects\test2.amvol
