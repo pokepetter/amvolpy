@@ -55,7 +55,7 @@ class NoteSection(Draggable):
         self.note_loops = Entity(parent=self.note_parent, color=self.color.tint(.3), z=-.1, model=Mesh(vertices=list(), mode='triangle', thickness=camera.fov*2))
         self.note_parent.point_renderer = Entity(parent=self.note_parent.parent, color=self.note_parent.color, texture='circle', z=-.1)
         self.note_loops.point_renderer = Entity(parent=self.note_loops.parent, color=self.note_loops.color, texture='circle', z=-.1)
-        self.loop_lines = Entity(parent=self, color=color.azure, z=-.1, model=Mesh(vertices=list(), mode='line', thickness=camera.fov*.5))
+        self.loop_lines = Entity(parent=self, color=color.azure, z=-.1, model=Mesh(vertices=[Vec3(0,0,0), Vec3(1,0,0)], mode='line', thickness=camera.fov*.5))
         self.scale_y = self.height / 32
         self.grid = Entity(parent=self, model=Grid(4,self.height), z=-1, origin=(-.5,-.5), color=color.color(0,0,1,.2), enabled=False)
         self.outline = Entity(parent=self, model=Quad(mode='line', segments=0, thickness=2), origin=(-.5,-.5), z=-1, enabled=False)
