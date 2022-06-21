@@ -1,5 +1,5 @@
 from ursina import *
-
+from time import perf_counter
 
 app = Ursina()
 
@@ -12,25 +12,34 @@ e = Entity(model='quad', collider='box', color=color.black, scale=32)
 grid = Entity(parent=e, model=Grid(32,32), color=color._32, z=-.1)
 cursor = Entity(model='wireframe_quad', origin=(-.5,-.5))
 
-offset = 60
+offset = 30
 keys = 'zxcvbnm,.asdfghjklqwertyuio1234567890'
 
-notes = [[None for y in range(32)] for x in range(32)]
+t = perf_counter()
 
-renderers = [[Text(parent=e, position=(-.5+(x/32),-.5+(y/32), -.1), text='<dark_gray>0', origin=(-.5,-.5), scale=.5) for y in range(32)] for x in range(32)]
+num_tracks = 32
 
-instruments = [Audio('sine', loop=True, volume=0) for i in range(32)]
-# a = Audio('sine', )
+notes = [[None for y in range(num_tracks)] for x in range(32)]
+
+renderers = [[None for y in range(num_tracks)] for x in range(32)]
+
+a = Audio('sine', loop=True, volume=0)
+from copy import copy, deepcopy
+# instruments = [Audio(a.clip, loop=True, volume=0) for i in range(num_tracks)]
+instruments = [Audio('sine', loop=True, volume=0) for i in range(num_tracks)]
+
+print('----', perf_counter() - t)
+
 app.playing = False
 app.t = 0
 app.i = 0
 
 def input(key):
-    if key in keys or key == '|':
-        if key == '|':
-            i = 0
+    if key in keys or key == ' ':
+        if key == ' ':
+            n = 0
         else:
-            i = keys.index(key)
+            n = keys.index(key)
 
         if e.hovered:
             coord = mouse.point
@@ -40,14 +49,29 @@ def input(key):
             print('aaaaaaaa', x,y)
             cursor.position = (-16+x,-16+y, -.1)
 
-            if i:
-                i = 60 + i
+            if n:
+                n = offset + n
 
-            notes[x][y] = i
+                import scale_changer
+                scale_changer.pattern = (3,2,2,3,2)
+                n = scale_changer.note_offset(n) - 20
 
-            renderers[x][y].text = f'<white>{i}'
-            if i == 0:
-                renderers[x][y].text = f'<white>|'
+
+            instruments[y].fade(1, duration=0)
+            instruments[y].fade(0, delay=1/8)
+            diff = (possible_note_frequencies[n] - 440)
+            pitch = 1 + (diff / 440)
+            instruments[y].pitch = pitch
+
+
+            if mouse.left:
+                notes[x][y] = n
+
+                if not renderers[x][y]:
+                    renderers[x][y] = Text(parent=e, position=(-.5+(x/32),-.5+(y/num_tracks), -.1), text='<dark_gray>0', origin=(-.5,-.5), scale=.5)
+                renderers[x][y].text = f'<white>{i}'
+                if n == 0:
+                    renderers[x][y].text = f'<white>|'
 
 
 
@@ -56,15 +80,18 @@ def input(key):
         if not app.playing:
             app.t = 0
             app.i = 0
+            for _ in instruments:
+                _.volume = 0
 
-line = Entity(model='quad', scale=(1,32), origin_x=-.5, color=color.azure, alpha=.3, x=-16, z=-.1)
+
+line = Entity(model='quad', scale=(1,num_tracks), origin=(-.5,-.5), color=color.azure, alpha=.3, x=-16, y=-16, z=-.1)
 def update():
     if app.playing:
         app.t += time.dt
         if app.t >= 1/8:
             app.t = 0
             app.i += 1
-            if app.i >= 32:
+            if app.i >= num_tracks:
                 app.i = 0
 
             # print(app.i)
@@ -80,7 +107,7 @@ def update():
                     # n = scale_changer.note_offset(n) - 20
                     print('----', n)
 
-                    diff = (possible_note_frequencies[n+offset] - 440)
+                    diff = (possible_note_frequencies[n] - 440)
                     pitch = 1 + (diff / 440)
                     instruments[i].pitch = pitch
 
