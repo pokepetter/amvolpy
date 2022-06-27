@@ -102,6 +102,7 @@ class NoteSection(Draggable):
         self.resizer = Resizer(self)
 
 
+
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -133,12 +134,12 @@ w = 128
 note_names = '\n'.join(('7654321'*7))
 
 def Note(x, y):
-    return Draggable(parent=note_editor.note_parent, model='quad', x=x, y=y,  origin=(-.5,-.5), color=color.azure, collider=None, step=(1,1,0), texture='horizontal_gradient', texture_scale=(.25,1))
+    return Draggable(parent=note_editor.note_parent, model='quad', x=x, y=y,  origin=(-.5,-.5), color=color.azure, collider=None, step=(.25,1,0), texture='horizontal_gradient', texture_scale=(.25,1))
 
 
 class NoteEditor(Entity):
     def __init__(self):
-        super().__init__(model='quad', color=color.black, origin=(-.5,-.5), x=-.85, y=.005 , scale_x=1/h*w/2, scale_y=.49, collider='box', z=1)
+        super().__init__(model='quad', color=color.black, origin=(-.5,-.5), x=-.85, y=-.005 , scale_x=1/h*w/2, scale_y=.49, collider='box', z=1)
 
 # note_editor = Entity(model='quad', color=color.black, origin=(-.5,-.5), x=-.85, y=.005 , scale_x=1/h*w/2, scale_y=.49, collider='box', z=1)
 # note_editor.texture='white_cube'; note_editor.texture_scale=(64,49)
@@ -158,7 +159,22 @@ class NoteEditor(Entity):
 # note_editor.help_line = Entity(model='quad', scale_y=.0025, parent=note_editor, origin_x=-.5, color=color.azure, z=-.2, y=1/7*3)
 
         self.note_parent = Entity(parent=self, scale=(1/w, 1/h), model='quad', color=color.green, origin=(-.5,-.5), z=-.2)
-        self.limiter = Draggable(parent=self.note_parent, color=color.azure, z=-.1, model=Circle(3), origin=(0,.5), scale=2, step=(1,0,0), lock=(0,1,1), min_x=0, x=64)
+
+        self.timeline = Entity(parent=self.note_parent, model='quad', collider='box', color=color.blue, origin=(-.5,-.5), position=(0,h), scale=(w,1))
+        def timeline_on_click():
+            x = mouse.point.x * w
+            print(x)
+            # x = round_to_closest(x, 1)
+            self.line.x = x
+            # self.start_position = x
+
+            composer.line.x = current_note_section.x + (x/w)
+
+        self.timeline.on_click = timeline_on_click
+        self.line = Draggable(model='quad', color=color.orange, z=-.5, parent=self.note_parent, lock=(False,True,True), scale=[1,1], y=h, origin_y=-.5, min_x=0, max_x=w, step=(1,0,0))
+        Entity(parent=self.line, model=Mesh(vertices=[Vec3(0,0,0), Vec3(0,-1,0)], mode='line', thickness=3), color=color.orange, z=.01, scale_y=h)
+
+        self.limiter = Draggable(parent=self.note_parent, color=color.azure, z=-.1, model=Circle(3), origin=(0,.5), scale=2, step=(1,0,0), lock=(0,1,1), min_x=0, x=32)
         self.limiter.bg = Entity(parent=self.limiter, model='quad', origin=(-.5,-.5), color=color.black66, scale=(128,h))
         self.playing = False
 
@@ -245,7 +261,7 @@ class Keyboard(Entity):
         if key in keyboard_keys:
             y = keyboard_keys.index(key)
 
-            note = Note(0, y)
+            # note = Note(0, y)
             # recorder.current_notes[y] = note
             # if recorder.recording:
             #     current_note_section.notes.append(note)
@@ -315,6 +331,11 @@ class Recorder(Entity):
         if held_keys['control'] and key == 'r':
             self.recording = not self.recording
 
+        if self.recording and key in keyboard_keys:
+            y = keyboard_keys.index(key)
+            print(int(composer.line.x * 128))
+            note = Note(int(composer.line.x * 128), y)
+
     @property
     def recording(self):
         return self._recording
@@ -324,8 +345,10 @@ class Recorder(Entity):
         self._recording = value
         if value:
             print('start recording')
+            composer.playing = True
         else:
             print('stop recording')
+            composer.playing = False
 
 
 
