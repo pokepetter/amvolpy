@@ -5,39 +5,73 @@ if __name__ == '__main__':
     camera.orthographic = True
     camera.fov = 1
 
-
 middle_bar = Entity(parent=scene, model='quad', origin_y=.0, collider='box', color=color._16, scale=(10,.05), z=-10, y=-.0425, lock=(1,0,1), min_y=-.425, max_y=.5-.025)
 middle_bar.highlight_color = middle_bar.color
+
+
+class Composer(Entity):
+    def __init__(self):
+        super().__init__(position=(-.85, middle_bar.y, 0))
+        self.bg = Entity(parent=self, model='quad', color=color._32, origin_y=.5, z=.1, scale=10, collider='box')
+        self.grid = Entity(parent=self, model=Grid(8*4,8), origin=(-.5,.5), y=-.05, scale=(.05*.8 *10*4, .05*.8 *10), color=color._84)
+        self.cursor = Entity(parent=self, model='wireframe_quad', z=-.1, color=color.cyan, scale=.05, origin=(-.5,-.5))
+        self.timeline = Entity(parent=self, model='quad', collider='box', color=color.blue, origin=(-.5,-.5), position=(0,-.05), scale=(2,.05))
+        self.line = Draggable(color=color.orange, z=-.1, parent=self, lock=(False,True,True), scale=.025, y=-.05, origin_y=-.5, min_x=0, max_x=self.grid.scale_x, step=(.025,0,0))
+        Entity(parent=self.line, model=Mesh(vertices=[Vec3(0,0,0), Vec3(0,-1,0)], mode='line', thickness=3), color=color.orange, z=.01, scale_y=2*8)
+
+        self.playing = False
+        self.start_position = 0
+
+        def timeline_on_click():
+            x = mouse.point.x * self.timeline.scale_x
+            x = round_to_closest(x, .025)
+            self.line.x = x
+            self.start_position = x
+        self.timeline.on_click = timeline_on_click
+
+
+    def input(self, key):
+        if key == 'double click' and mouse.hovered_entity == self.bg:
+            print(self.cursor.position)
+            ns = NoteSection(position=self.cursor.position)
+            note_sections.append(ns)
+
+        if key == 'space':
+            if held_keys['control'] and not self.line.x == self.start_position:
+                self.line.x = self.start_position
+                self.playing = False
+                return
+
+            self.playing = not self.playing
+
+
+    def update(self):
+        if mouse.hovered_entity == composer.bg:
+            self.cursor.position = mouse.point * 10
+            self.cursor.x = clamp(composer.cursor.x, 0, 10)
+            self.cursor.x = round_to_closest(composer.cursor.x-.025, .05)
+            self.cursor.y = clamp(composer.cursor.y, -8, 0)
+            self.cursor.y = round_to_closest(composer.cursor.y-.025, .05)
+
+        if self.playing:
+            self.line.x += time.dt / 32
+
+
+    def stop(self):
+        self.line.x = self.start_position
+
+
+
+
+composer = Composer()
+
 play_button = Button(parent=middle_bar, world_scale=.04, z=-.1, color=color.red, text='>')
 play_button.text_entity.scale = 1
 playing = False
 
-composer = Entity(position=(-.85, middle_bar.y, 0))
 middle_bar.drag = Func(setattr, composer, 'world_parent', middle_bar)
 middle_bar.drop = Func(setattr, composer, 'world_parent', scene)
-# note_section_size = .05*.8
-composer.bg = Entity(parent=composer, model='quad', color=color._32, origin_y=.5, z=.1, scale=10, collider='box')
-composer.grid = Entity(parent=composer, model=Grid(8*4,8), origin=(-.5,.5), y=-.05, scale=(.05*.8 *10*4, .05*.8 *10), color=color._84)
 
-def composer_input(key):
-    if key == 'double click' and mouse.hovered_entity == composer.bg:
-        print(composer.cursor.position)
-        ns = NoteSection(position=composer.cursor.position)
-        note_sections.append(ns)
-
-
-composer.input = composer_input
-
-composer.cursor = Entity(parent=composer, model='wireframe_quad', z=-.1, color=color.cyan, scale=.05, origin=(-.5,-.5))
-def composer_update():
-    if mouse.hovered_entity == composer.bg:
-        composer.cursor.position = mouse.point * 10
-        composer.cursor.x = clamp(composer.cursor.x, 0, 10)
-        composer.cursor.x = round_to_closest(composer.cursor.x-.025, .05)
-        composer.cursor.y = clamp(composer.cursor.y, -8, 0)
-        composer.cursor.y = round_to_closest(composer.cursor.y-.025, .05)
-
-composer.update = composer_update
 
 class Resizer(Draggable):
     def __init__(self, note_section):
@@ -201,25 +235,6 @@ keyboard_keys = 'zxcvbnm,.asdfghjklqwertyuio123456789'
 up_keys = [f'{e} up' for e in keyboard_keys]
 
 
-class Recorder(Entity):
-    def __init__(self):
-        super().__init__(recording=False, current_notes=[None for i in range(128)], t=0)
-
-    def input(self, key):
-        if held_keys['control'] and key == 'r':
-            if not self.recording:
-                self.recording = False
-                self.t = 0
-            else:
-                self.t = 0
-                self.recording = True
-
-    def update(self):
-        if self.recording:
-            self.t += time.dt
-
-recorder = Recorder()
-
 class Keyboard(Entity):
     def __init__(self):
         super().__init__()
@@ -270,58 +285,51 @@ def play_note(pitch, length=1/8, volume=1):
 
 
 
-timeline = Entity(parent=composer, model='quad', collider='box', color=color.blue, origin=(-.5,-.5), position=(0,-.05), scale=(2,.05))
-def timeline_on_click():
-    x = mouse.point.x * timeline.scale_x
-    x = round_to_closest(x, .025)
-    line.x = x
-timeline.on_click = timeline_on_click
 
-line = Draggable(color=color.orange, z=-.1, parent=composer, lock=(False,True,True), scale=.025, y=-.05, origin_y=-.5, min_x=0, max_x=composer.grid.scale_x, step=(.025,0,0))
-Entity(parent=line, model=Mesh(vertices=[Vec3(0,0,0), Vec3(0,-1,0)], mode='line', thickness=3), color=color.orange, z=.01, scale_y=2*8)
-
-app.seq = Sequence()
-def play(start=0, end=None):
-    print('------------', 'play')
-    app.seq = Sequence(loop=False, auto_destroy=False)
-    for ns in note_sections:
-        app.seq.extend([Wait(ns.duration * ns.loops), Func(ns.play)])
-
-
-def stop():
-    [ns.stop() for ns in note_sections]
-
-
-
-def input(key):
-    if mouse.y > 0 and key == 'space':
-        current_note_section.play()
-
-
-# class Recorder(Entity):
-#     def __init__(self):
-#         super().__init__()
-#         self.recording = False
 #
-#     def input(self, key):
-#         if held_keys['control'] and key == 'r':
-#             self.recording = not self.recording
-#
-#     @property
-#     def recording(self):
-#         return self._recording
-#
-#     @recording.setter
-#     def recording(self, value):
-#         self._recording = value
-#         if value:
-#             print('start recording')
-#         else:
-#             print('stop recording')
+# app.seq = Sequence()
+# def play(start=0, end=None):
+#     print('------------', 'play')
+#     app.seq = Sequence(loop=False, auto_destroy=False)
+#     for ns in note_sections:
+#         app.seq.extend([Wait(ns.duration * ns.loops), Func(ns.play)])
 #
 #
-# recorder = Recorder()
-    # NoteEditor()
+# def stop():
+#     [ns.stop() for ns in note_sections]
+#
+#
+#
+# def input(key):
+#     if mouse.y > 0 and key == 'space':
+#         current_note_section.play()
+#
+
+
+class Recorder(Entity):
+    def __init__(self):
+        super().__init__()
+        self.recording = False
+
+    def input(self, key):
+        if held_keys['control'] and key == 'r':
+            self.recording = not self.recording
+
+    @property
+    def recording(self):
+        return self._recording
+
+    @recording.setter
+    def recording(self, value):
+        self._recording = value
+        if value:
+            print('start recording')
+        else:
+            print('stop recording')
+
+
+
+recorder = Recorder()
 
 if __name__ == '__main__':
     app.run()
