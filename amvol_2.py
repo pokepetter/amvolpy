@@ -37,7 +37,7 @@ class Composer(Entity):
             note_sections.append(ns)
 
         if key == 'space':
-            if held_keys['control'] and not self.line.x == self.start_position:
+            if not held_keys['control'] and not self.line.x == self.start_position:
                 self.line.x = self.start_position
                 self.playing = False
                 return
@@ -151,7 +151,8 @@ class NoteEditor(Entity):
         self.target_y = self.y
 
         self.grid = Entity(parent=self, model=Grid(w,h), origin=(-.5,-.5), position=(0,0), z=-.01, color=color._16)
-        Entity(parent=self.grid, model=Grid(w/16, 7, thickness=2), origin=(-.5,-.5), color=color.dark_gray)
+        Entity(parent=self.grid, model=Grid(w/32, 1, thickness=2), origin=(-.5,-.5), color=color.cyan)
+        Entity(parent=self.grid, model=Grid(w/16, 7, thickness=2), origin=(-.5,-.5), color=color._32)
         t = Text(parent=self, origin=(.5,.5), font='VeraMono.ttf', text=note_names, z=-1, position=(0,1), world_scale=.4, line_height=1)
 
         self.add_script(Scrollable(axis='x', scroll_speed=-.1, scroll_smoothing=16))
@@ -166,9 +167,9 @@ class NoteEditor(Entity):
             print(x)
             # x = round_to_closest(x, 1)
             self.line.x = x
-            # self.start_position = x
+            composer.line.x = current_note_section.x + (self.line.x/w/5)
+            self.line.start_dragging()
 
-            composer.line.x = current_note_section.x + (x/w)
 
         self.timeline.on_click = timeline_on_click
         self.line = Draggable(model='quad', color=color.orange, z=-.5, parent=self.note_parent, lock=(False,True,True), scale=[1,1], y=h, origin_y=-.5, min_x=0, max_x=w, step=(1,0,0))
@@ -231,6 +232,9 @@ class NoteEditor(Entity):
             x = int(mouse.point.x * w) + 1
             self.current_note.scale_x = x - self.current_note.x
             self.current_note.scale_x = max(self.current_note.scale_x, 1)
+
+        if self.line.dragging:
+            composer.line.x = current_note_section.x + (self.line.x/w/5)
 
 
 note_editor = NoteEditor()
