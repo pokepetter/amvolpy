@@ -88,6 +88,8 @@ class Resizer(Draggable):
         self.note_section.texture_scale = (self.note_section.scale_x/.05, 1)
 
 
+import scale_changer
+scale_changer.pattern = (3,2,2,3,2)
 
 class NoteSection(Draggable):
     def __init__(self, **kwargs):
@@ -101,27 +103,98 @@ class NoteSection(Draggable):
         self._seq = None
         self.resizer = Resizer(self)
 
+        self.samples = None
+        self.sounds = None
+        self.attack = .1
+        self.falloff = 1
+        self.loop_samples = False
+        self.instrument = 'uoiowa_piano'
+        self.fadeouts = [None for i in range(128)]
 
+        self.t = 0
 
         for key, value in kwargs.items():
             setattr(self, key, value)
 
 
-
     def play(self, start=0):
-        print(self)
-        if self._seq:
-            self._seq.kill()
-
-        self._seq = Sequence(auto_destroy=False, looping=True)
-        for n in self.notes:
-            self._seq.extend([Wait(n.x/8), Func(play_note, n.y, length=n.scale_x/8)])
-        self._seq.start()
+        self.playing = True
+        # print(self)
+        # if self._seq:
+        #     self._seq.kill()
+        #
+        # self._seq = Sequence(auto_destroy=False, looping=True)
+        # for n in self.notes:
+        #     self._seq.extend([Wait(n.x/8), Func(play_note, n.y, length=n.scale_x/8)])
+        # self._seq.start()
 
     def stop(self):
-        if not self._seq:
-            return
-        self._seq.kill()
+        self.playing = False
+        self.t = 0
+
+    # def update(self):
+    #     if not self.playing:
+    #         return
+    #
+    #     self.t += time.dt
+    #     for e in self.notes:
+    #         if
+
+
+
+    def start_note(self, i, volume=1):
+        i = scale_changer.note_offset(i) + offset
+        # print(i)
+        if self.is_recording:
+            self.notes
+
+
+        if self.fadeouts[i]:
+            self.fadeouts[i].kill()
+            self.fadeouts[i] = None
+
+        s = Sequence()
+        for j in range(int(self.attack*60)+1):
+            s.append(Wait(j/60))
+            s.append(Func(setattr, self.sounds[i], 'volume', lerp(0, volume, j/int(self.attack*60))))
+
+        self.fadeouts[i] = s
+        if not self.loop_samples:
+            self.sounds[i].play()
+        s.start()
+
+
+    def stop_note(self, i):
+        i = scale_changer.note_offset(i) + offset
+        # print(i)
+        if self.fadeouts[i]:
+            self.fadeouts[i].kill()
+            self.fadeouts[i] = None
+
+        current_volume = self.sounds[i].volume
+        s = Sequence()
+        for j in range(int(self.falloff*60)+1):
+            s.append(Wait(j/60))
+            s.append(Func(setattr, self.sounds[i], 'volume', lerp(self.sounds[i].volume, 0, j/int(self.falloff*60))))
+
+        self.fadeouts[i] = s
+        s.start()
+
+
+    @property
+    def instrument(self):
+        return self._instrument
+
+    @instrument.setter
+    def instrument(self, name):
+        self._instrument = name
+
+        import instrument_loader
+        self.samples_and_pitches, self.attack, self.falloff, self.loop_samples = instrument_loader.load_instrument(name)
+        self.sounds = [Audio(e[0], loop=self.loop_samples, pitch=e[1], volume=0) for e in self.samples_and_pitches]
+
+        print('---------------', 'set insturment to:', len(self.fadeouts))
+
 
 
 note_sections = []
@@ -239,18 +312,18 @@ class NoteEditor(Entity):
 
 note_editor = NoteEditor()
 
-start_hz = 440
-note_index = 69 # A4
-twelfth_root_of_two = pow(2, 1/12)
-
-possible_note_frequencies = [440 for i in range(128)]
-for i in range(128):
-    possible_note_frequencies[i] = start_hz * pow(twelfth_root_of_two, i-69)
+# start_hz = 440
+# note_index = 69 # A4
+# twelfth_root_of_two = pow(2, 1/12)
+#
+# possible_note_frequencies = [440 for i in range(128)]
+# for i in range(128):
+#     possible_note_frequencies[i] = start_hz * pow(twelfth_root_of_two, i-69)
 
 
 # print(possible_note_frequencies)
 
-offset = 60
+offset = 12
 keyboard_keys = 'zxcvbnm,.asdfghjklqwertyuio123456789'
 up_keys = [f'{e} up' for e in keyboard_keys]
 
@@ -264,47 +337,17 @@ class Keyboard(Entity):
     def input(self, key):
         if key in keyboard_keys:
             y = keyboard_keys.index(key)
-
-            # note = Note(0, y)
-            # recorder.current_notes[y] = note
-            # if recorder.recording:
-            #     current_note_section.notes.append(note)
             self.note_overlays[y].enabled = True
+            current_note_section.start_note(y)
 
         elif key in up_keys:
             y = up_keys.index(key)
-            # if recorder.recording and recorder.current_notes[y]:
-            #     recorder.current_notes[y].scale_x = current_time - recorder.current_notes[y].x
-            # recorder.current_notes[y] = None
-
             self.note_overlays[y].enabled = False
-
+            current_note_section.stop_note(y)
 
 
 
 keyboard = Keyboard()
-
-#         press_note(i, length=1)
-
-def press_note(i, volume=1, length=1/4):
-    import scale_changer
-    scale_changer.pattern = (3,2,2,3,2)
-    print(i)
-    i -= held_keys['a'] * 3
-    i = scale_changer.note_offset(i) - 10
-
-    diff = (possible_note_frequencies[i+offset] - 440)
-    pitch = 1 + (diff / 440)
-    play_note(pitch, length=length, volume=volume)
-
-
-def play_note(pitch, length=1/8, volume=1):
-    a = Audio('sine', loop=True, pitch=pitch, volume=volume)
-    a.animate('volume', 0, duration=.25, delay=length)
-    destroy(a, delay=length+1)
-
-
-
 
 #
 # app.seq = Sequence()
