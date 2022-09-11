@@ -5,8 +5,12 @@ if __name__ == '__main__':
     camera.orthographic = True
     camera.fov = 1
 
+
+
 middle_bar = Entity(parent=scene, model='quad', origin_y=.0, collider='box', color=color._16, scale=(10,.05), z=-10, y=-.0425, lock=(1,0,1), min_y=-.425, max_y=.5-.025)
 middle_bar.highlight_color = middle_bar.color
+
+note_sections = []
 
 
 class Composer(Entity):
@@ -19,6 +23,7 @@ class Composer(Entity):
         self.line = Draggable(color=color.orange, z=-.1, parent=self, lock=(False,True,True), scale=.025, y=-.05, origin_y=-.5, min_x=0, max_x=self.grid.scale_x, step=(.025,0,0))
         Entity(parent=self.line, model=Mesh(vertices=[Vec3(0,0,0), Vec3(0,-1,0)], mode='line', thickness=3), color=color.orange, z=.01, scale_y=2*8)
 
+        self.t = 0
         self.playing = False
         self.start_position = 0
 
@@ -38,6 +43,7 @@ class Composer(Entity):
 
         if key == 'space':
             if not held_keys['control'] and not self.line.x == self.start_position:
+                self.t = self.start_position
                 self.line.x = self.start_position
                 self.playing = False
                 return
@@ -53,8 +59,35 @@ class Composer(Entity):
             self.cursor.y = clamp(composer.cursor.y, -8, 0)
             self.cursor.y = round_to_closest(composer.cursor.y-.025, .05)
 
-        if self.playing:
-            self.line.x += time.dt / 32
+            # return
+        if not self.playing:
+            return
+
+        self.line.x += time.dt / 20
+        self.t += time.dt
+        # print('----', self.t)
+
+        for ns in note_sections:
+            if self.t < (ns.x*20) or self.t > ((ns.x*20) + (ns.scale_x*20)):
+                ns.color = color.azure
+                return
+
+            ns.color = color.lime
+            ns.t = self.t - (ns.x*20)
+            # print(self.t, ns.t)
+            ns.line.x = ns.t
+            note_editor.line.x = ns.t * 32
+
+            for note in ns.notes:
+                y = int(note.y)
+                if not ns.sounds[y].is_playing and ns.t >= note.x/32 and ns.t < (note.x+note.scale_x)/32:
+                    ns.start_note(y)
+                    print('s:', y)
+                    ns.sounds[y].is_playing = True
+                elif ns.sounds[y].is_playing and ns.t > (note.x + note.scale_x)/32:
+                    ns.stop_note(y)
+                    ns.sounds[y].is_playing = False
+
 
 
     def stop(self):
@@ -65,9 +98,11 @@ class Composer(Entity):
 
 composer = Composer()
 
-play_button = Button(parent=middle_bar, world_scale=.04, z=-.1, color=color.red, text='>')
-play_button.text_entity.scale = 1
-playing = False
+play_button = Button(scale=.045, y=-.045, z=-.1, color=color.orange, text='play\nall')
+# play_button.world_parent = middle_bar
+# play_button.text_entity.scale = 1
+# playing = False
+
 
 middle_bar.drag = Func(setattr, composer, 'world_parent', middle_bar)
 middle_bar.drop = Func(setattr, composer, 'world_parent', scene)
@@ -103,22 +138,27 @@ class NoteSection(Draggable):
         self._seq = None
         self.resizer = Resizer(self)
 
-        self.samples = None
-        self.sounds = None
+        self.samples = [None for i in range(128)]
+        self.sounds = [None for i in range(128)]
         self.attack = .1
         self.falloff = 1
         self.loop_samples = False
         self.instrument = 'uoiowa_piano'
         self.fadeouts = [None for i in range(128)]
 
+        self.playing = False
+        self.current_recording_notes = [None for i in range(128)]
+
+        self.line = Entity(parent=self, model='line', rotation_z=90, scale_x=1, z=-1, color=color.white, origin_x=-.5)
         self.t = 0
+
 
         for key, value in kwargs.items():
             setattr(self, key, value)
 
 
-    def play(self, start=0):
-        self.playing = True
+    # def play(self, start=0):
+    #     self.playing = True
         # print(self)
         # if self._seq:
         #     self._seq.kill()
@@ -128,25 +168,41 @@ class NoteSection(Draggable):
         #     self._seq.extend([Wait(n.x/8), Func(play_note, n.y, length=n.scale_x/8)])
         # self._seq.start()
 
-    def stop(self):
-        self.playing = False
-        self.t = 0
+    # def stop(self):
+    #     self.playing = False
+    #     self.t = 0
+
 
     # def update(self):
     #     if not self.playing:
     #         return
     #
-    #     self.t += time.dt
-    #     for e in self.notes:
-    #         if
-
+    #     self.t += time.dt * 32
+    #     self.line.x = self.t / 32
+    #     note_editor.line.x = self.t
+    #
+    #     for note in self.notes:
+    #         y = int(note.y)
+    #         if not self.sounds[y].is_playing and self.t >= note.x and self.t < note.x+note.scale_x:
+    #             self.start_note(y)
+    #             print('s:', y)
+    #             self.sounds[y].is_playing = True
+    #             # print('play')
+    #         elif self.sounds[y].is_playing and self.t > note.x + note.scale_x:
+    #             self.stop_note(y)
+    #             self.sounds[y].is_playing = False
 
 
     def start_note(self, i, volume=1):
         i = scale_changer.note_offset(i) + offset
-        # print(i)
-        if self.is_recording:
-            self.notes
+        if i > 127:
+            return
+        # print('aaaa', i)
+        if recorder.recording:
+            print('record:', self.t)
+            note = Note(x=self.t, y=i)
+            self.current_recording_notes[i] = note
+            self.notes.append(note)
 
 
         if self.fadeouts[i]:
@@ -159,14 +215,16 @@ class NoteSection(Draggable):
             s.append(Func(setattr, self.sounds[i], 'volume', lerp(0, volume, j/int(self.attack*60))))
 
         self.fadeouts[i] = s
-        if not self.loop_samples:
-            self.sounds[i].play()
+        # if not self.loop_samples:
+        self.sounds[i].play()
         s.start()
 
 
     def stop_note(self, i):
         i = scale_changer.note_offset(i) + offset
-        # print(i)
+        if i > 127:
+            return
+        print('stop note:', i)
         if self.fadeouts[i]:
             self.fadeouts[i].kill()
             self.fadeouts[i] = None
@@ -176,9 +234,12 @@ class NoteSection(Draggable):
         for j in range(int(self.falloff*60)+1):
             s.append(Wait(j/60))
             s.append(Func(setattr, self.sounds[i], 'volume', lerp(self.sounds[i].volume, 0, j/int(self.falloff*60))))
-
         self.fadeouts[i] = s
         s.start()
+
+        # if self.current_recording_notes[i]:
+        #     print('stop note:', i, self.t - self.current_recording_notes[i].x)
+        #     self.current_recording_notes[i].scale_x = self.t - self.current_recording_notes[i].x
 
 
     @property
@@ -187,17 +248,17 @@ class NoteSection(Draggable):
 
     @instrument.setter
     def instrument(self, name):
+        print('---------------', 'set insturment to:', name)
         self._instrument = name
 
         import instrument_loader
         self.samples_and_pitches, self.attack, self.falloff, self.loop_samples = instrument_loader.load_instrument(name)
-        self.sounds = [Audio(e[0], loop=self.loop_samples, pitch=e[1], volume=0) for e in self.samples_and_pitches]
-
-        print('---------------', 'set insturment to:', len(self.fadeouts))
-
+        self.sounds = [Audio(e[0], loop=self.loop_samples, pitch=e[1], volume=0, is_playing=False) for e in self.samples_and_pitches]
+        print('---------------', self.sounds)
 
 
-note_sections = []
+
+
 current_note_section = NoteSection()
 note_sections.append(current_note_section)
 
@@ -295,8 +356,8 @@ class NoteEditor(Entity):
             self.current_note = None
 
 
-        if key == 'space':
-            self.playing = not self.playing
+        # if key == 'space':
+        #     self.playing = not self.playing
 
 
 
@@ -373,33 +434,61 @@ class Recorder(Entity):
     def __init__(self):
         super().__init__()
         self.recording = False
+        self.record_button = Button(scale=.035, text='rec', color=color.magenta, position=(.05,-.04,-1), on_click=self.toggle_recording)
 
     def input(self, key):
         if held_keys['control'] and key == 'r':
-            self.recording = not self.recording
+            self.toggle_recording()
 
-        if self.recording and key in keyboard_keys:
-            y = keyboard_keys.index(key)
-            print(int(composer.line.x * 128))
-            note = Note(int(composer.line.x * 128), y)
+        # if self.recording and key in keyboard_keys:
+        #     y = keyboard_keys.index(key)
+        #     print(int(composer.line.x * 128))
+        #     note = Note(int(composer.line.x * 128), y)
 
-    @property
-    def recording(self):
-        return self._recording
+    def toggle_recording(self):
+        self.recording = not self.recording
 
-    @recording.setter
-    def recording(self, value):
-        self._recording = value
-        if value:
-            print('start recording')
-            composer.playing = True
-        else:
-            print('stop recording')
-            composer.playing = False
+
+    # @property
+    # def recording(self):
+    #     return self._recording
+    #
+    # @recording.setter
+    # def recording(self, value):
+    #     self._recording = value
+    #     if value:
+    #         print('start recording')
+    #         current_note_section.playing = True
+    #
+    #     else:
+    #         print('stop recording')
+    #         current_note_section.playing = False
 
 
 
 recorder = Recorder()
 
+def toggle_play():
+    if not current_note_section.playing:
+        current_note_section.play()
+    else:
+        current_note_section.stop()
+
+play_current_note_section_button = Button(text='play\nsolo', position=(-.05,-.04,-1), color=color.azure, scale=.035, on_click=toggle_play)
+# def _input(key):
+#     if key == 'space':
+#         toggle_play()
+
+# play_current_note_section_button.input = _input
+
+def go_to_start():
+    composer.t = 0
+#
+# go_to_start_button = Button(text='|<-', position=(-.1,-.04,-1), color=color.yellow, scale=.03, on_click=go_to_start)
+
+
 if __name__ == '__main__':
+    current_note_section.notes.extend([Note(0,16), Note(4,17), Note(8,18), Note(12,19)])
+    for e in current_note_section.notes:
+        e.scale_x = 4
     app.run()
