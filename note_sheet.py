@@ -38,6 +38,7 @@ class NoteSheet(Entity):
             model = Mesh(vertices=[(0,0,0), (0,1,0)], mode='line', thickness=4),
             color = color.red,
             z = -4,
+            alpha=0
             )
 
         self.note_sections = list()
