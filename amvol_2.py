@@ -95,19 +95,6 @@ class Composer(Entity):
 
 
 
-
-composer = Composer()
-
-play_button = Button(scale=.045, y=-.045, z=-.1, color=color.orange, text='play\nall')
-# play_button.world_parent = middle_bar
-# play_button.text_entity.scale = 1
-# playing = False
-
-
-middle_bar.drag = Func(setattr, composer, 'world_parent', middle_bar)
-middle_bar.drop = Func(setattr, composer, 'world_parent', scene)
-
-
 class Resizer(Draggable):
     def __init__(self, note_section):
         super().__init__(parent=note_section, model='quad', world_scale_x=.005, color=color.white, z=-.1, x=1, origin=(.5,-.5), collider='box', alpha=.1, lock=(0,1,1), step=(.025,0,0))
@@ -158,7 +145,7 @@ class NoteSection(Draggable):
 
         self.line = Entity(parent=self, model='line', rotation_z=90, scale_x=1, z=-1, color=color.white, origin_x=-.5)
         self.t = 0
-        self.on_click = Func(setattr, composer, 'current_note_section', self)
+        self.on_click = Func(setattr, note_editor, 'current_note_section', self)
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -265,11 +252,6 @@ class NoteSection(Draggable):
 
 
 
-
-current_note_section = NoteSection()
-note_sections.append(current_note_section)
-
-
 h = 7*7
 w = 128
 note_names = '\n'.join(('7654321'*7))
@@ -314,7 +296,7 @@ class NoteEditor(Entity):
             print(x)
             # x = round_to_closest(x, 1)
             self.line.x = x
-            composer.line.x = current_note_section.x + (self.line.x/w/5)
+            composer.line.x = self.current_note_section.x + (self.line.x/w/5)
             self.line.start_dragging()
 
 
@@ -323,6 +305,13 @@ class NoteEditor(Entity):
         Entity(parent=self.line, model=Mesh(vertices=[Vec3(0,0,0), Vec3(0,-1,0)], mode='line', thickness=3), color=color.orange, z=.01, scale_y=h)
 
         self.limiter = Draggable(parent=self.note_parent, color=color.azure, z=-.1, model=Circle(3), origin=(0,.5), scale=2, step=(1,0,0), lock=(0,1,1), min_x=0, x=32)
+        def drop():
+            if not self.current_note_section:
+                return
+            print('set note sections length to:', self.limiter.x)
+            self.current_note_section.length = self.limiter.x
+
+        self.limiter.drop = drop
         self.limiter.bg = Entity(parent=self.limiter, model='quad', origin=(-.5,-.5), color=color.black66, scale=(128,h))
         self.playing = False
 
@@ -338,12 +327,14 @@ class NoteEditor(Entity):
             e.y = note.y
             e.scale_x = note.length
 
+        self.limiter.x = self.current_note_section.length
+
     # def get_hovered_note(self):
     #     x = int(mouse.point.x * w)
     #     y = int(mouse.point.y * h)
     #
     #     # move note
-    #     for note in current_note_section.notes:
+    #     for note in self.current_note_section.notes:
     #         if note.y == y and note.x <= x and note.x+note.scale_x > x:
     #             return note, x, y
     #
@@ -360,7 +351,7 @@ class NoteEditor(Entity):
     #         if not note and held_keys['control']:
     #             note = Note(x, y)
     #             note.drop = Func(setattr, note, 'collision', False)
-    #             current_note_section.notes.append(note)
+    #             self.current_note_section.notes.append(note)
     #             self.current_note = note
     #
     #         elif note:
@@ -375,7 +366,7 @@ class NoteEditor(Entity):
     #             note.start_dragging()
     #             return
     #
-    #         for e in current_note_section.notes:
+    #         for e in self.current_note_section.notes:
     #             if e in self.selection:
     #                 e.color = color.magenta
     #             else:
@@ -397,9 +388,9 @@ class NoteEditor(Entity):
     #             if not held_keys['shift'] and not held_keys['alt']:
     #                 print('clear selection')
     #                 self.selection.clear()
-
-        # if key == 'space':
-        #     self.playing = not self.playing
+    #
+    #     if key == 'space':
+    #         self.playing = not self.playing
 
 
     #
@@ -422,9 +413,6 @@ class NoteEditor(Entity):
         self._current_note_section = value
         self.render()
 
-
-
-note_editor = NoteEditor()
 
 # start_hz = 440
 # note_index = 69 # A4
@@ -452,35 +440,13 @@ class Keyboard(Entity):
         if key in keyboard_keys:
             y = keyboard_keys.index(key)
             self.note_overlays[y].enabled = True
-            current_note_section.start_note(y)
+            note_editor.current_note_section.start_note(y)
 
         elif key in up_keys:
             y = up_keys.index(key)
             self.note_overlays[y].enabled = False
-            current_note_section.stop_note(y)
+            note_editor.current_note_section.stop_note(y)
 
-
-
-keyboard = Keyboard()
-
-#
-# app.seq = Sequence()
-# def play(start=0, end=None):
-#     print('------------', 'play')
-#     app.seq = Sequence(loop=False, auto_destroy=False)
-#     for ns in note_sections:
-#         app.seq.extend([Wait(ns.duration * ns.loops), Func(ns.play)])
-#
-#
-# def stop():
-#     [ns.stop() for ns in note_sections]
-#
-#
-#
-# def input(key):
-#     if mouse.y > 0 and key == 'space':
-#         current_note_section.play()
-#
 
 
 class Recorder(Entity):
@@ -502,30 +468,28 @@ class Recorder(Entity):
         self.recording = not self.recording
 
 
-    # @property
-    # def recording(self):
-    #     return self._recording
-    #
-    # @recording.setter
-    # def recording(self, value):
-    #     self._recording = value
-    #     if value:
-    #         print('start recording')
-    #         current_note_section.playing = True
-    #
-    #     else:
-    #         print('stop recording')
-    #         current_note_section.playing = False
+
+composer = Composer()
+note_editor = NoteEditor()
+note_editor.current_note_section = NoteSection()
+note_sections.append(note_editor.current_note_section)
+
+keyboard = Keyboard()
+play_button = Button(scale=.045, y=-.045, z=-.1, color=color.orange, text='play\nall')
+# play_button.world_parent = middle_bar
+# play_button.text_entity.scale = 1
+# playing = False
 
 
-
+middle_bar.drag = Func(setattr, composer, 'world_parent', middle_bar)
+middle_bar.drop = Func(setattr, composer, 'world_parent', scene)
 recorder = Recorder()
 
 def toggle_play():
-    if not current_note_section.playing:
-        current_note_section.play()
+    if not note_editor.current_note_section.playing:
+        note_editor.current_note_section.play()
     else:
-        current_note_section.stop()
+        note_editor.current_note_section.stop()
 
 play_current_note_section_button = Button(text='play\nsolo', position=(-.05,-.04,-1), color=color.azure, scale=.035, on_click=toggle_play)
 # def _input(key):
@@ -541,10 +505,10 @@ def go_to_start():
 
 
 if __name__ == '__main__':
-    current_note_section.notes.extend([Note(0,16,length=4), Note(4,17,length=4), Note(8,18,length=4), Note(12,19,length=8)])
-    for e in current_note_section.notes:
+    note_editor.current_note_section.notes.extend([Note(0,16,length=4), Note(4,17,length=4), Note(8,18,length=4), Note(12,19,length=4)])
+    for e in note_editor.current_note_section.notes:
         e.scale_x = 4
 
-    note_editor.current_note_section = current_note_section
+    # note_editor.current_note_section = current_note_section
     note_editor.render()
     app.run()
