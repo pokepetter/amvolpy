@@ -15,11 +15,12 @@ class Composer(Entity):
         self.bg = Entity(parent=self, model='quad', color=color._32, origin_y=.5, z=.1, scale=10, collider='box')
         self.grid = Entity(parent=self, model=Grid(8*4,8), origin=(-.5,.5), y=-.05, scale=(.05*.8 *10*4, .05*.8 *10), color=color._84)
         self.cursor = Entity(parent=self, model='wireframe_quad', z=-.1, color=color.cyan, scale=.05, origin=(-.5,-.5))
-        self.timeline = Entity(parent=self, model='quad', collider='box', color=color.blue, origin=(-.5,-.5), position=(0,-.05), scale=(2,.05))
+        self.timeline = Entity(parent=self, model='quad', collider='box', color=color.azure, origin=(-.5,-.5), position=(0,-.05), scale=(2,.05))
         self.line = Draggable(color=color.orange, z=-.1, parent=self, lock=(False,True,True), scale=.025, y=-.05, origin_y=-.5, min_x=0, max_x=self.grid.scale_x, step=(.025,0,0))
         Entity(parent=self.line, model=Mesh(vertices=[Vec3(0,0,0), Vec3(0,-1,0)], mode='line', thickness=3), color=color.orange, z=.01, scale_y=2*8)
 
         self.playing = False
+        self.current_note_section = None
         self.start_position = 0
 
         def timeline_on_click():
@@ -27,6 +28,8 @@ class Composer(Entity):
             x = round_to_closest(x, .025)
             self.line.x = x
             self.start_position = x
+            self.line.start_dragging()
+
         self.timeline.on_click = timeline_on_click
 
 
@@ -36,7 +39,7 @@ class Composer(Entity):
             ns = NoteSection(position=self.cursor.position)
             note_sections.append(ns)
 
-        if key == 'space':
+        if key == 'space' and mouse.y < 0:
             if not held_keys['control'] and not self.line.x == self.start_position:
                 self.line.x = self.start_position
                 self.playing = False
@@ -125,8 +128,8 @@ class NoteSection(Draggable):
 
 
 note_sections = []
-current_note_section = NoteSection()
-note_sections.append(current_note_section)
+composer.current_note_section = NoteSection()
+note_sections.append(composer.current_note_section)
 
 
 h = 7*7
@@ -161,13 +164,13 @@ class NoteEditor(Entity):
 
         self.note_parent = Entity(parent=self, scale=(1/w, 1/h), model='quad', color=color.green, origin=(-.5,-.5), z=-.2)
 
-        self.timeline = Entity(parent=self.note_parent, model='quad', collider='box', color=color.blue, origin=(-.5,-.5), position=(0,h), scale=(w,1))
+        self.timeline = Entity(parent=self.note_parent, model='quad', collider='box', color=color.azure, origin=(-.5,-.5), position=(0,h), scale=(w,1))
         def timeline_on_click():
             x = mouse.point.x * w
             print(x)
             # x = round_to_closest(x, 1)
             self.line.x = x
-            composer.line.x = current_note_section.x + (self.line.x/w/5)
+            composer.line.x = composer.current_note_section.x + (self.line.x/w/5)
             self.line.start_dragging()
 
 
@@ -184,7 +187,7 @@ class NoteEditor(Entity):
         y = int(mouse.point.y * h)
 
         # move note
-        for note in current_note_section.notes:
+        for note in composer.current_note_section.notes:
             if note.y == y and note.x <= x and note.x+note.scale_x > x:
                 return note, x, y
 
@@ -202,7 +205,7 @@ class NoteEditor(Entity):
             if not note:
                 note = Note(x, y)
                 note.drop = Func(setattr, note, 'collision', False)
-                current_note_section.notes.append(note)
+                composer.current_note_section.notes.append(note)
                 self.current_note = note
 
             else:
@@ -222,8 +225,14 @@ class NoteEditor(Entity):
             self.current_note = None
 
 
-        if key == 'space':
+        if key == 'space' and mouse.y > 0:
+            if not held_keys['control'] and not self.line.x == 0:
+                self.line.x = 0
+                self.playing = False
+                return
+
             self.playing = not self.playing
+            print('note editor', self.playing)
 
 
 
@@ -232,9 +241,17 @@ class NoteEditor(Entity):
             x = int(mouse.point.x * w) + 1
             self.current_note.scale_x = x - self.current_note.x
             self.current_note.scale_x = max(self.current_note.scale_x, 1)
-
         if self.line.dragging:
-            composer.line.x = current_note_section.x + (self.line.x/w/5)
+            composer.line.x = composer.current_note_section.x + (self.line.x/w/5)
+
+
+        if self.playing:
+            self.line.x += time.dt * 32
+            self.line.x = self.line.x % self.limiter.x
+
+
+    def stop(self):
+        self.line.x = 0
 
 
 note_editor = NoteEditor()
@@ -268,7 +285,7 @@ class Keyboard(Entity):
             # note = Note(0, y)
             # recorder.current_notes[y] = note
             # if recorder.recording:
-            #     current_note_section.notes.append(note)
+            #     composer.current_note_section.notes.append(note)
             self.note_overlays[y].enabled = True
 
         elif key in up_keys:
@@ -322,7 +339,7 @@ def play_note(pitch, length=1/8, volume=1):
 #
 # def input(key):
 #     if mouse.y > 0 and key == 'space':
-#         current_note_section.play()
+#         composer.current_note_section.play()
 #
 
 
