@@ -1,6 +1,6 @@
 from ursina import application
 from pathlib import Path
-import notesheet
+import note_sheet
 
 from popup_message import PopupMessage
 

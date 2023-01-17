@@ -9,6 +9,7 @@ class EndButton(Draggable):
             lock_y=True,
             position=(1,1,-2),
             color=color.orange,
+            alpha = 0,
             step=1/16,
             **kwargs
             )

@@ -12,24 +12,24 @@ def get_tags(string, start_tag, end_tag):
 
 # get_tags('names_nsma[ejgaogj]fjio[rijg][gjk3][9]', '[', ']')
 
-def load_instrument(name, ns=None):
+def load_instrument(name):
     samples = [None, ] * 128
+    attack, falloff, loop_samples = .05, .5, False
     files = list(application.asset_folder.glob(f'**/{name}*'))
-    print('-----------files:', files)
+    # print('-----------files:', files)
     if len(files) == 0:
         print('instrument', name, 'not found')
         return None
 
-    if ns != None:
-        for e in get_tags(files[0].stem, '[', ']'):
-            if e.startswith('a'):
-                ns.attack = int(e[1:])
-                print('set attack to:', e[1:])
-            if e.startswith('f'):
-                print('set falloff to:', int(e[1:]) / 1000)
-                ns.falloff = int(e[1:]) / 1000
-            if e == 'loop':
-                ns.loop = True
+    for e in get_tags(files[0].stem, '[', ']'):
+        if e.startswith('a'):
+            attack = int(e[1:])
+            print('set attack to:', e[1:])
+        if e.startswith('f'):
+            print('set falloff to:', int(e[1:]) / 1000)
+            falloff = int(e[1:]) / 1000
+        if e == 'loop':
+            loop_samples = True
 
     for f in files:
         for e in get_tags(f.stem, '[', ']'):
@@ -67,8 +67,8 @@ def load_instrument(name, ns=None):
             new_samples[i] = (loader.loadSfx(samples[i+dist]), pow(1 / 1.05946309436, dist))
             # new_samples[i] = (samples[i+dist], dist))
 
-    print(new_samples)
-    return new_samples
+    # print(new_samples)
+    return new_samples, attack, falloff, loop_samples
 
 
 
@@ -76,15 +76,15 @@ def load_instrument(name, ns=None):
 if __name__ == '__main__':
     # i = load_instrument('0DefaultPiano')
     # i = load_instrument('celeste')
-    # from ursina import *
-    # app = Ursina()
+    from ursina import *
+    app = Ursina()
     # Audio('oooooleander')
-    # app.run()
     import time
     t = time.time()
     files = list(application.asset_folder.glob(f'**/uoiowa_piano*'))
-    print(files)
+    # print(files)
     print(time.time() - t)
-    # i = load_instrument('uoiowa_piano')
-    # for e in i:
-    #     print(e)
+    i = load_instrument('uoiowa_piano')
+    for e in i:
+        print(e)
+    app.run()
