@@ -124,7 +124,7 @@ class Note():
 
 class NoteSection(Draggable):
     def __init__(self, length=32, **kwargs):
-        super().__init__(parent=composer, model='quad', origin=(-.5,-.5), step=(.1/4,.1,0), color=color.magenta, scale=.05, y=-.1, alpha=.5)
+        super().__init__(parent=composer, model='quad', origin=(-.5,-.5), step=(.1/4,.1,0), color=color.hsv(random.randint(0, 360), .7, .8), scale=.05, y=-.1, alpha=.5)
         self.step = (self.scale_x/4, self.scale_y, 0    )
         self.outline = Entity(parent=self, model=Quad(mode='line', radius=0), origin=self.origin, alpha=.1)
     #     self.drag_bar = Draggable(parent=composer, model='quad', origin=(.5,-.5), z=-.1, step=self.step, color=color.yellow, scale=(.005,self.scale_y))
@@ -270,21 +270,57 @@ note_names = '\n'.join(('7654321'*7))
 
 class DraggableNote(Draggable):
     def __init__(self, **kwargs):
-        super().__init__(model='quad', origin=(-.5,-.5), color=color.azure, collider=None, step=(.25,1,0), texture='horizontal_gradient', texture_scale=(.25,1), **kwargs)
+        super().__init__(model='quad', origin=(-.5,-.5), color=color.azure, step=(.25,1,0), texture='horizontal_gradient', texture_scale=(.25,1), **kwargs)
+        self.disabled = True
+
+    def drag(self):
+        [invoke(setattr, e, 'world_parent', self, delay=1/60) for e in NoteEditor.selection if not e == self]
+
+    def drop(self):
+        if not NoteEditor.current_note_section:
+            return
+        [setattr(e, 'world_parent', NoteEditor.note_parent) for e in NoteEditor.selection if not e == self]
+
+        for i, e in enumerate([e for e in NoteEditor.note_cache if e.enabled]):
+            NoteEditor.current_note_section.notes[i].x = e.x
+            NoteEditor.current_note_section.notes[i].y = e.y
+            NoteEditor.current_note_section.notes[i].length = e.scale_x
+
+    def input(self, key):
+        super().input(key)
+        if key == 'left mouse down':
+            if not mouse.hovered_entity in NoteEditor.note_cache:
+                NoteEditor.selection = []
+
+            if self.hovered:
+                if not held_keys['shift']:
+                    NoteEditor.selection = []
+                else:
+                    if not self in NoteEditor.selection:
+                        NoteEditor.selection.append(self)
+                    else:
+                        NoteEditor.selection.remove(self)
+
+                NoteEditor.render()
+
+
 
 
 class NoteEditor(Entity):
+    _instance = None    # assigned on __init__
     note_cache = []
+    current_note_section = []
+    selection = []
 
     def __init__(self):
+        NoteEditor._instance = self
         super().__init__(model='quad', color=color.black, origin=(-.5,-.5), x=-.85, y=-.005 , scale_x=1/h*w/2, scale_y=.49, collider='box', z=1)
-        self.current_note = None
-        self.selection = []
+        # self.current_note = None
         self.target_y = self.y
 
         # self.grid = Entity(parent=self, model=Grid(w,h), origin=(-.5,-.5), position=(0,0), z=-.01, color=color._16)
         self.grid = Entity(parent=self, model='quad', texture='white_cube', texture_scale=(w,h), origin=(-.5,-.5), position=(0,0), z=-.01, color=color._16)
-        Entity(parent=self.grid, model=Grid(w/32, 1, thickness=2), origin=(-.5,-.5), color=color.cyan)
+        Entity(parent=self.grid, model=Grid(w/32, 1, thickness=2), origin=(-.5,-.5), color=hsv(210,.5,.3))
         Entity(parent=self.grid, model=Grid(w/16, 7, thickness=2), origin=(-.5,-.5), color=color._32)
         t = Text(parent=self, origin=(.5,.5), font='VeraMono.ttf', text=note_names, z=-1, position=(0,1), world_scale=.4, line_height=1)
 
@@ -292,132 +328,54 @@ class NoteEditor(Entity):
         # self.cursor = Entity(model='quad', parent=self, scale=(1/w, 1/h), origin=(-.5,-.5), color=color.azure, z=-.1)
 # note_editor.help_line = Entity(model='quad', scale_y=.0025, parent=note_editor, origin_x=-.5, color=color.azure, z=-.2, y=1/7*3)
 
-        self.note_parent = Entity(parent=self, scale=(1/w, 1/h), origin=(-.5,-.5), z=-.2)
+        NoteEditor.note_parent = Entity(parent=self, scale=(1/w, 1/h), origin=(-.5,-.5), z=-.2)
         if not __class__.note_cache:
-            __class__.note_cache = [DraggableNote(parent=self.note_parent, enabled=False) for e in range(128)]
+            __class__.note_cache = [DraggableNote(parent=NoteEditor.note_parent, enabled=False) for e in range(128)]
 
-        self.timeline = Entity(parent=self.note_parent, model='quad', collider='box', color=color.magenta, origin=(-.5,-.5), position=(0,h), scale=(w,1))
+        self.timeline = Entity(parent=NoteEditor.note_parent, model='quad', collider='box', color=color.magenta, origin=(-.5,-.5), position=(0,h), scale=(w,1))
         def timeline_on_click():
             x = mouse.point.x * w
             print(x)
             # x = round_to_closest(x, 1)
             self.line.x = x
-            composer.line.x = self.current_note_section.x + (self.line.x/w/5)
+            composer.line.x = NoteEditor.current_note_section.x + (self.line.x/w/5)
             self.line.start_dragging()
 
 
         self.timeline.on_click = timeline_on_click
-        self.line = Draggable(model='quad', color=color.orange, z=-.5, parent=self.note_parent, lock=(False,True,True), scale=[1,1], y=h, origin_y=-.5, min_x=0, max_x=w, step=(1,0,0))
+        self.line = Draggable(model='quad', color=color.orange, z=-.5, parent=NoteEditor.note_parent, lock=(False,True,True), scale=[1,1], y=h, origin_y=-.5, min_x=0, max_x=w, step=(1,0,0))
         Entity(parent=self.line, model=Mesh(vertices=[Vec3(0,0,0), Vec3(0,-1,0)], mode='line', thickness=3), color=color.orange, z=.01, scale_y=h)
 
-        self.limiter = Draggable(parent=self.note_parent, color=color.orange, z=-.1, model=Circle(3), origin=(0,.5), scale=2, step=(1,0,0), lock=(0,1,1), min_x=0, x=32)
-        def drop():
-            if not self.current_note_section:
+        NoteEditor.limiter = Draggable(parent=NoteEditor.note_parent, color=color.orange, z=-.1, model=Circle(3), origin=(0,.5), scale=2, step=(1,0,0), lock=(0,1,1), min_x=0, x=32)
+        def limiter_drop():
+            if not NoteEditor.current_note_section:
                 return
-            print('set note sections length to:', self.limiter.x)
-            self.current_note_section.length = self.limiter.x
+            print('set note sections length to:', NoteEditor.limiter.x)
+            NoteEditor.current_note_section.length = NoteEditor.limiter.x
 
-        self.limiter.drop = drop
-        self.limiter.bg = Entity(parent=self.limiter, model='quad', origin=(-.5,-.5), color=color.black66, scale=(128,h))
+        NoteEditor.limiter.drop = limiter_drop
+        NoteEditor.limiter.bg = Entity(parent=NoteEditor.limiter, model='quad', origin=(-.5,-.5), color=color.black66, scale=(128,h))
         self.playing = False
 
-    def render(self):
-        if not self.current_note_section:
-            print('cant render, please set note_editor.current_note_section')
+
+    @classmethod
+    def render(cls):
+        if not NoteEditor.current_note_section:
+            print('cant render, please set NoteEditor.current_note_section')
             return
-        [e.disable() for e in __class__.note_cache]
-        for i, note in enumerate(self.current_note_section.notes):
+        [e.disable() for e in NoteEditor.note_cache]
+        for i, note in enumerate(NoteEditor.current_note_section.notes):
             e = __class__.note_cache[i]
             e.enabled = True
             e.x = note.x
             e.y = note.y
             e.scale_x = note.length
+            e.color = color.azure
+            if e in NoteEditor.selection:
+                e.color = color.lime
 
-        self.limiter.x = self.current_note_section.length
+        NoteEditor.limiter.x = NoteEditor.current_note_section.length
 
-    # def get_hovered_note(self):
-    #     x = int(mouse.point.x * w)
-    #     y = int(mouse.point.y * h)
-    #
-    #     # move note
-    #     for note in self.current_note_section.notes:
-    #         if note.y == y and note.x <= x and note.x+note.scale_x > x:
-    #             return note, x, y
-    #
-    #     return None, x, y
-    #
-    #
-    # def input(self, key):
-    #     if self.hovered and key == 'left mouse down':
-    #         # x = int(mouse.point.x * w)
-    #         # y = int(mouse.point.y * h)
-    #         # print(x, y)
-    #         note, x, y = self.get_hovered_note()
-    #
-    #         if not note and held_keys['control']:
-    #             note = Note(x, y)
-    #             note.drop = Func(setattr, note, 'collision', False)
-    #             self.current_note_section.notes.append(note)
-    #             self.current_note = note
-    #
-    #         elif note:
-    #             # move note
-    #             if held_keys['shift'] and x > note.x+note.scale_x-2:
-    #                 print('resize note')
-    #                 self.current_note = note
-    #                 return
-    #
-    #             print('drag note')
-    #             self.current_note = None
-    #             note.start_dragging()
-    #             return
-    #
-    #         for e in self.current_note_section.notes:
-    #             if e in self.selection:
-    #                 e.color = color.magenta
-    #             else:
-    #                 e.color = color.azure
-    #
-    #
-    #     if self.current_note and key == 'left mouse up':
-    #         self.current_note = None
-    #
-    #
-    #     if key == 'left mouse up':   # select notes
-    #         note, x, y = self.get_hovered_note()
-    #         if note:
-    #             if not note in self.selection:
-    #                 self.selection.append(note)
-    #             else:
-    #                 self.selection.remove(note)
-    #         else: # start box select
-    #             if not held_keys['shift'] and not held_keys['alt']:
-    #                 print('clear selection')
-    #                 self.selection.clear()
-    #
-    #     if key == 'space':
-    #         self.playing = not self.playing
-
-
-    #
-    # def update(self):
-    #     if self.current_note and mouse.left and self.hovered:
-    #         x = int(mouse.point.x * w) + 1
-    #         self.current_note.scale_x = x - self.current_note.x
-    #         self.current_note.scale_x = max(self.current_note.scale_x, 1)
-    #
-    #     if self.line.dragging:
-    #         composer.line.x = current_note_section.x + (self.line.x/w/5)
-
-
-    @property
-    def current_note_section(self):
-        return self._current_note_section
-
-    @current_note_section.setter
-    def current_note_section(self, value):
-        self._current_note_section = value
-        self.render()
 
 
 # start_hz = 440
@@ -439,19 +397,19 @@ up_keys = [f'{e} up' for e in keyboard_keys]
 class Keyboard(Entity):
     def __init__(self):
         super().__init__()
-        self.note_overlays = [Entity(parent=note_editor.note_parent, model='quad', color=rgb(255,255,255,64), origin=(-.5,-.5), z=-.1, scale=(w, 1), y=i, enabled=False) for i in range(h)]
+        self.note_overlays = [Entity(parent=NoteEditor.note_parent, model='quad', color=rgb(255,255,255,64), origin=(-.5,-.5), z=-.1, scale=(w, 1), y=i, enabled=False) for i in range(h)]
 
 
     def input(self, key):
         if key in keyboard_keys:
             y = keyboard_keys.index(key)
             self.note_overlays[y].enabled = True
-            note_editor.current_note_section.start_note(y)
+            NoteEditor.current_note_section.start_note(y)
 
         elif key in up_keys:
             y = up_keys.index(key)
             self.note_overlays[y].enabled = False
-            note_editor.current_note_section.stop_note(y)
+            NoteEditor.current_note_section.stop_note(y)
 
 
 
@@ -481,7 +439,8 @@ class Recorder(Entity):
     def start_recording(self):
         self.recording_note_section = NoteSection(length=32*32)
         self.recording_note_section.recording = True
-        note_editor.current_note_section = self.recording_note_section
+        NoteEditor.current_note_section = self.recording_note_section
+        NoteEditor.render()
         composer.playing = True
 
 
@@ -489,14 +448,16 @@ class Recorder(Entity):
         if self.recording_note_section:
             self.recording_note_section.recording = False
             self.recording_note_section = None
-        note_editor.current_note_section = None
+        NoteEditor.current_note_section = None
+        NoteEditor.render()
         composer.playing = False
 
 
 
 composer = Composer()
 note_editor = NoteEditor()
-note_editor.current_note_section = NoteSection()
+NoteEditor.current_note_section = NoteSection()
+NoteEditor.render()
 note_sections.append(note_editor.current_note_section)
 
 keyboard = Keyboard()
