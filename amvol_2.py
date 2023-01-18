@@ -149,11 +149,14 @@ class NoteSection(Draggable):
 
         self.line = Entity(parent=self, model='line', rotation_z=90, scale_x=1, z=-1, color=color.white, origin_x=-.5)
         self.t = 0
-        self.on_click = Func(setattr, note_editor, 'current_note_section', self)
 
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+
+    def on_click(self):
+        NoteEditor.current_note_section = self
+        NoteEditor.render()
 
     # def play(self, start=0):
     #     self.playing = True
@@ -270,7 +273,7 @@ note_names = '\n'.join(('7654321'*7))
 
 class DraggableNote(Draggable):
     def __init__(self, **kwargs):
-        super().__init__(model='quad', origin=(-.5,-.5), color=color.azure, step=(.25,1,0), texture='horizontal_gradient', texture_scale=(.25,1), **kwargs)
+        super().__init__(model='quad', origin=(-.5,-.5), color=color.azure, step=(.5,1,0), texture='horizontal_gradient', texture_scale=(.25,1), **kwargs)
         self.disabled = True
 
     def drag(self):
@@ -286,24 +289,6 @@ class DraggableNote(Draggable):
             NoteEditor.current_note_section.notes[i].y = e.y
             NoteEditor.current_note_section.notes[i].length = e.scale_x
 
-    def input(self, key):
-        super().input(key)
-        if key == 'left mouse down':
-            if not mouse.hovered_entity in NoteEditor.note_cache:
-                NoteEditor.selection = []
-
-            if self.hovered:
-                if not held_keys['shift']:
-                    NoteEditor.selection = []
-                else:
-                    if not self in NoteEditor.selection:
-                        NoteEditor.selection.append(self)
-                    else:
-                        NoteEditor.selection.remove(self)
-
-                NoteEditor.render()
-
-
 
 
 class NoteEditor(Entity):
@@ -311,6 +296,7 @@ class NoteEditor(Entity):
     note_cache = []
     current_note_section = []
     selection = []
+    current_note = None # assigned when you create a new note
 
     def __init__(self):
         NoteEditor._instance = self
@@ -375,6 +361,45 @@ class NoteEditor(Entity):
                 e.color = color.lime
 
         NoteEditor.limiter.x = NoteEditor.current_note_section.length
+
+    def input(self, key):
+        if key == 'left mouse down':
+            if not mouse.hovered_entity in NoteEditor.note_cache:
+                NoteEditor.selection = []
+
+            if self.hovered:
+                if not held_keys['shift']:
+                    NoteEditor.selection = []
+                else:
+                    if not self in NoteEditor.selection:
+                        NoteEditor.selection.append(self)
+                    else:
+                        NoteEditor.selection.remove(self)
+
+                NoteEditor.render()
+
+            if held_keys['control'] and self.hovered:
+                # print(mouse.point)
+                x, y = [int(e) for e in (mouse.point.xy) * Vec2(w, h)]
+                print('add note:', x, y)
+                NoteEditor.current_note_section.notes.append(Note(x, y, 1))
+                NoteEditor.render()
+                mouse.update()
+                if mouse.hovered_entity in NoteEditor.note_cache:
+                    NoteEditor.current_note = mouse.hovered_entity
+                    NoteEditor.current_note.dragging = False
+                # print(mouse.hovered_entity)
+
+        if key == 'left mouse up' and NoteEditor.current_note:
+            NoteEditor.current_note = None
+
+
+    def update(self):
+        print(self.hovered, NoteEditor.current_note)
+        if NoteEditor.current_note and NoteEditor.current_note.hovered:
+            print((mouse.point.x*w - NoteEditor.current_note.x > 1))
+            # print('drag')
+
 
 
 
