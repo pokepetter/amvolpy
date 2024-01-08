@@ -16,21 +16,6 @@ class ScaleChangerMenu(Entity):
             setattr(self, key ,value)
 
 
-        self.patterns = {
-            'chromatic' : (1,1,1,1,1,1,1,1,1,1,1,1),
-
-            'heptatonic' : (2,2,1,2,2,2,1),
-            'natural minor' : (2,1,2,2,1,2,2),
-            'dorian' : (2,1,2,2,2,1,2),
-
-            'hexadiatonic' : (2,2,1,2,2,3),
-
-            'whole tone' : (2,2,2,2,2,2),
-
-            'minor pentatonic' : (3,2,2,3,2),
-            'major pentatonic' : (2,2,3,2,3),
-            'ritsusen' : (2,3,2,2,3),
-            }
 
         self.toggle_button = Button(text='scle\ncngr', model='quad', scale=.05, position=(.5,-.45, -2))
 
@@ -50,7 +35,7 @@ class ScaleChangerMenu(Entity):
         self.button_group = ButtonGroup(
             parent = self,
             # options = [str(e).replace(',', '')[1:-1] for e in self.patterns],
-            options = self.patterns.keys(),
+            options = scale_changer.patterns.keys(),
             )
 
         for i, e in enumerate(self.button_group.buttons):
@@ -58,7 +43,7 @@ class ScaleChangerMenu(Entity):
             e.x = 0
             e.y = i
             e.origin_y = -.5
-            e.pattern = self.patterns[e.text_entity.text]
+            e.pattern = scale_changer.patterns[e.text_entity.text]
 
 
         self.keyboard_graphic = Entity(parent=self, scale=.025)
@@ -140,7 +125,7 @@ sys.modules[__name__] = ScaleChangerMenu()
 
 if __name__ == '__main__':
     import style
-    import keyboard
+    # import keyboard
     t = time.time()
     # base.scale_changer = ScaleChanger()
     # base.scale_changer_menu = ScaleChangerMenu()

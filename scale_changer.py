@@ -1,12 +1,30 @@
 ﻿from ursina import *
 
 
+
+
 class ScaleChanger(Entity):
     def __init__(self):
         super().__init__()
         self.base_note_offset = 0
 
         self.final_offsets = list()
+
+        self.patterns = {
+            'chromatic' : (1,1,1,1,1,1,1,1,1,1,1,1),
+
+            'heptatonic' : (2,2,1,2,2,2,1),
+            'natural minor' : (2,1,2,2,1,2,2),
+            'dorian' : (2,1,2,2,2,1,2),
+
+            'hexadiatonic' : (2,2,1,2,2,3),
+
+            'whole tone' : (2,2,2,2,2,2),
+
+            'minor pentatonic' : (3,2,2,3,2),
+            'major pentatonic' : (2,2,3,2,3),
+            'ritsusen' : (2,3,2,2,3),
+            }
         # self.pattern = (2, 2, 1, 2, 2, 3)
         # self.pattern = (1,)*12
         self.pattern = (2,1,2,2,2,1,2)
@@ -77,8 +95,30 @@ class ScaleChanger(Entity):
 
 if __name__ == '__main__':
     app = Ursina()
-sys.modules[__name__] = ScaleChanger()
+scale_changer = ScaleChanger()
+sys.modules[__name__] = scale_changer
 if __name__ == '__main__':
+
+    pattern = scale_changer.patterns['heptatonic']
+
+    buttons = []
+    for oct in range(3):
+        for i, n in enumerate(('C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B')):
+            b = Button(scale=.05, text=n, x=-.7+(i*.05) + (oct*.05*12), color=color.white, text_color=color.black)
+            buttons.append(b)
+            if n.endswith('#'):
+                b.color=color.black
+                b.text_color=color.white
+                b.y = .025
+
+    for i, b in enumerate(buttons):
+        n = scale_changer.note_offset(i)
+        print(n)
+        if n < len(buttons):
+            buttons[n].color = color.azure
+            buttons[n].text_color = color.white
+
+
     app.run()
 
 
