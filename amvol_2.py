@@ -6,7 +6,7 @@ if __name__ == '__main__':
     camera.fov = 1
 
 
-
+window.color = color.black
 middle_bar = Entity(parent=scene, model='quad', origin_y=.0, collider='box', color=color._16, scale=(10,.05), z=-10, y=-.0425, lock=(1,0,1), min_y=-.425, max_y=.5-.025)
 middle_bar.highlight_color = middle_bar.color
 
@@ -18,10 +18,10 @@ class Composer(Entity):
         super().__init__(position=(-.85, middle_bar.y, 0))
         self.bg = Entity(parent=self, model='quad', color=color._32, origin_y=.5, z=.1, scale=10, collider='box')
         self.grid = Entity(parent=self, model=Grid(8*4,8), origin=(-.5,.5), y=-.05, scale=(.05*.8 *10*4, .05*.8 *10), color=color._84)
-        self.cursor = Entity(parent=self, model='wireframe_quad', z=-.1, color=color.cyan, scale=.05, origin=(-.5,-.5))
+        self.cursor = Entity(parent=self, model='wireframe_quad', z=-.1, color=color.cyan, alpha=.1, scale=.05, origin=(-.5,-.5))
         self.timeline = Entity(parent=self, model='quad', collider='box', color=color.blue, origin=(-.5,-.5), position=(0,-.05), scale=(2,.05))
-        self.line = Draggable(color=color.orange, z=-.1, parent=self, lock=(False,True,True), scale=.025, y=-.05, origin_y=-.5, min_x=0, max_x=self.grid.scale_x, step=(.025,0,0))
-        Entity(parent=self.line, model=Mesh(vertices=[Vec3(0,0,0), Vec3(0,-1,0)], mode='line', thickness=3), color=color.orange, z=.01, scale_y=2*8)
+        self.line = Draggable(color=hsv(210,.8,.5), z=-.1, parent=self, lock=(False,True,True), scale=.025, y=-.05, origin_y=-.5, min_x=0, max_x=self.grid.scale_x, step=(.025,0,0))
+        Entity(parent=self.line, model=Mesh(vertices=[Vec3(0,0,0), Vec3(0,-1,0)], mode='line', thickness=3), color=self.line.color, z=.01, scale_y=2*8)
 
         self.t = 0
         self.playing = False
@@ -76,16 +76,16 @@ class Composer(Entity):
             ns.t = self.t - (ns.x*20)
             # print(self.t, ns.t)
             ns.line.x = ns.t
-            if ns == note_editor.current_note_section:
+            if ns == NoteEditor.current_note_section:
                 note_editor.line.x = ns.t * 32
 
             for note in ns.notes:
                 y = int(note.y)
-                if not ns.sounds[y].is_playing and ns.t >= note.x/32 and ns.t < (note.x+note.scale_x)/32:
+                if not ns.sounds[y].is_playing and ns.t >= note.x/32 and ns.t < (note.x+note.length)/32:
                     ns.start_note(y)
                     print('s:', y)
                     ns.sounds[y].is_playing = True
-                elif ns.sounds[y].is_playing and ns.t > (note.x + note.scale_x)/32:
+                elif ns.sounds[y].is_playing and ns.t > (note.x + note.length)/32:
                     ns.stop_note(y)
                     ns.sounds[y].is_playing = False
 
@@ -124,7 +124,7 @@ class Note():
 
 class NoteSection(Draggable):
     def __init__(self, length=32, **kwargs):
-        super().__init__(parent=composer, model='quad', origin=(-.5,-.5), step=(.1/4,.1,0), color=color.hsv(random.randint(0, 360), .7, .8), scale=.05, y=-.1, alpha=.5)
+        super().__init__(parent=composer, model='quad', origin=(-.5,-.5), step=(.1/4,.1,0), color=color.hsv(random.randint(0, 360), .7, .8), scale=.05, y=-.1, alpha=.5, disabled=True)
         self.step = (self.scale_x/4, self.scale_y, 0    )
         self.outline = Entity(parent=self, model=Quad(mode='line', radius=0), origin=self.origin, alpha=.1)
     #     self.drag_bar = Draggable(parent=composer, model='quad', origin=(.5,-.5), z=-.1, step=self.step, color=color.yellow, scale=(.005,self.scale_y))
@@ -273,7 +273,7 @@ note_names = '\n'.join(('7654321'*7))
 
 class DraggableNote(Draggable):
     def __init__(self, **kwargs):
-        super().__init__(model='quad', origin=(-.5,-.5), color=color.azure, step=(.5,1,0), texture='horizontal_gradient', texture_scale=(.25,1), **kwargs)
+        super().__init__(model='quad', origin=(-.5,-.5), color=color.azure, step=(1,1,0), texture='horizontal_gradient', texture_scale=(.25,1), **kwargs)
         self.disabled = True
 
     def drag(self):
@@ -308,7 +308,7 @@ class NoteEditor(Entity):
         self.grid = Entity(parent=self, model='quad', texture='white_cube', texture_scale=(w,h), origin=(-.5,-.5), position=(0,0), z=-.01, color=color._16)
         Entity(parent=self.grid, model=Grid(w/32, 1, thickness=2), origin=(-.5,-.5), color=hsv(210,.5,.3))
         Entity(parent=self.grid, model=Grid(w/16, 7, thickness=2), origin=(-.5,-.5), color=color._32)
-        t = Text(parent=self, origin=(.5,.5), font='VeraMono.ttf', text=note_names, z=-1, position=(0,1), world_scale=.4, line_height=1)
+        t = Text(parent=self, origin=(.5,.5), font='VeraMono.ttf', text=note_names, z=-1, position=(-.0005,1), world_scale=.4, line_height=1, color=color.gray)
 
         self.add_script(Scrollable(axis='x', scroll_speed=-.1, scroll_smoothing=16))
         # self.cursor = Entity(model='quad', parent=self, scale=(1/w, 1/h), origin=(-.5,-.5), color=color.azure, z=-.1)
@@ -318,7 +318,7 @@ class NoteEditor(Entity):
         if not __class__.note_cache:
             __class__.note_cache = [DraggableNote(parent=NoteEditor.note_parent, enabled=False) for e in range(128)]
 
-        self.timeline = Entity(parent=NoteEditor.note_parent, model='quad', collider='box', color=color.magenta, origin=(-.5,-.5), position=(0,h), scale=(w,1))
+        self.timeline = Entity(parent=NoteEditor.note_parent, model='quad', collider='box', color=color._32, origin=(-.5,-.5), position=(0,h), scale=(w,1))
         def timeline_on_click():
             x = mouse.point.x * w
             print(x)
@@ -329,10 +329,10 @@ class NoteEditor(Entity):
 
 
         self.timeline.on_click = timeline_on_click
-        self.line = Draggable(model='quad', color=color.orange, z=-.5, parent=NoteEditor.note_parent, lock=(False,True,True), scale=[1,1], y=h, origin_y=-.5, min_x=0, max_x=w, step=(1,0,0))
-        Entity(parent=self.line, model=Mesh(vertices=[Vec3(0,0,0), Vec3(0,-1,0)], mode='line', thickness=3), color=color.orange, z=.01, scale_y=h)
+        self.line = Draggable(model='quad', color=hsv(210,.8,.5), z=-.5, parent=NoteEditor.note_parent, lock=(False,True,True), scale=[1,1], y=h, origin_y=-.5, min_x=0, max_x=w, step=(1,0,0))
+        Entity(parent=self.line, model=Mesh(vertices=[Vec3(0,0,0), Vec3(0,-1,0)], mode='line', thickness=3), color=self.line.color, z=.01, scale_y=h)
 
-        NoteEditor.limiter = Draggable(parent=NoteEditor.note_parent, color=color.orange, z=-.1, model=Circle(3), origin=(0,.5), scale=2, step=(1,0,0), lock=(0,1,1), min_x=0, x=32)
+        NoteEditor.limiter = Draggable(parent=NoteEditor.note_parent, color=hsv(210,.8,.5), z=-.1, model=Circle(3), origin=(0,.5), scale=2, step=(1,0,0), lock=(0,1,1), min_x=0, x=32)
         def limiter_drop():
             if not NoteEditor.current_note_section:
                 return
@@ -382,7 +382,7 @@ class NoteEditor(Entity):
                 # print(mouse.point)
                 x, y = [int(e) for e in (mouse.point.xy) * Vec2(w, h)]
                 print('add note:', x, y)
-                NoteEditor.current_note_section.notes.append(Note(x, y, 1))
+                NoteEditor.current_note_section.notes.append(Note(x, y, 2))
                 NoteEditor.render()
                 mouse.update()
                 if mouse.hovered_entity in NoteEditor.note_cache:
@@ -497,10 +497,10 @@ middle_bar.drop = Func(setattr, composer, 'world_parent', scene)
 recorder = Recorder()
 
 def toggle_play():
-    if not note_editor.current_note_section.playing:
-        note_editor.current_note_section.play()
+    if not NoteEditor.current_note_section.playing:
+        NoteEditor.current_note_section.play()
     else:
-        note_editor.current_note_section.stop()
+        NoteEditor.current_note_section.stop()
 
 play_current_note_section_button = Button(text='play\nsolo', position=(-.05,-.04,-1), color=color.azure, scale=.035, on_click=toggle_play)
 # def _input(key):
@@ -516,10 +516,10 @@ def go_to_start():
 
 
 if __name__ == '__main__':
-    note_editor.current_note_section.notes.extend([Note(0,16,length=4), Note(4,17,length=4), Note(8,18,length=4), Note(12,19,length=4)])
-    for e in note_editor.current_note_section.notes:
+    NoteEditor.current_note_section.notes.extend([Note(0,16,length=4), Note(4,17,length=4), Note(8,18,length=4), Note(12,19,length=4)])
+    for e in NoteEditor.current_note_section.notes:
         e.scale_x = 4
 
-    # note_editor.current_note_section = current_note_section
-    note_editor.render()
+    # NoteEditor.current_note_section = current_note_section
+    NoteEditor.render()
     app.run()
