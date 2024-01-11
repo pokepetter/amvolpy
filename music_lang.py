@@ -35,10 +35,12 @@ class Instrument:
         instruments.append(self)
 
         self.notes = []
+        self.is_chord = []
         self.durations = []
         for char in self.note_pattern:
             if char in notes:
                 self.notes.append(notes.index(char))
+                self.is_chord.append(char.isupper)
                 self.durations.append(1)
 
             elif char == '-':
@@ -46,17 +48,20 @@ class Instrument:
 
             elif char == ' ':
                 self.notes.append(None)
+                self.is_chord.append(False)
                 self.durations.append(1)
 
-        print(self.notes, self.durations)
+        print(self.notes, self.is_chord, self.durations)
 
 from ursina import *
 app = Ursina()
 
 from ursina.prefabs.ursfx import ursfx
-piano = Instrument('sfh---- wdf ', octave=-1, speed=8, loops=4)
-piano = Instrument('hgfdgfds', octave=-1, speed=4, loops=4)
+piano = Instrument('sfh---- wdf ', octave=-3, speed=4, loops=4)
+piano = Instrument('hgfdgfds', octave=-3, speed=2, loops=4)
 
+scale_changer.pattern = scale_changer.patterns['minor pentatonic']
+scale_changer.scale_rotation = 4
 
 for instrument in instruments:
     for loop in range(instrument.loops):
@@ -65,38 +70,28 @@ for instrument in instruments:
             print('--', n ,dur)
             if not n:
                 continue
-            n = scale_changer.note_offset(n) - (12*instrument.octave)
-            a = Audio('sine.wav', loop=True, pitch=pow(1 / 1.05946309436, -n), volume=1.0, autoplay=False)
 
             delay = 1+( (cum_time + (loop * sum(instrument.durations))) /instrument.speed)
             duration = 1/8 * dur
-            invoke(a.play, delay=delay)
-            a.fade_out(delay=delay+duration, duration=.2)
-
             cum_time += dur
 
+            chord = (0)
 
-# from FoxDot import *
-#
-# # Start the FoxDot server
-# Clock.clear()
-# Clock.bpm = 120
 
-# def play_note(volume_curve=curve.linear, volume=.75, wave='sine', pitch=0, speed=1):  # play a retro style sound effect
-#     a = Audio(wave, loop=True, pitch=pow(1 / 1.05946309436, -pitch), volume=volume_curve[0][1] * volume)
-#
-#     for i in range(len(volume_curve)-1):
-#         a.animate('volume', volume_curve[i+1][1] * volume, duration=(volume_curve[i+1][0] - volume_curve[i][0]) / speed, delay=volume_curve[i][0] / speed, curve=curve.linear)
-#
-#     a.animate('pitch', pow(1 / 1.05946309436, -pitch), duration=volume_curve[i-1][0] / speed, curve=pitch_curve)
-#     a.animations.append(invoke(a.stop, delay=volume_curve[4][0] / speed))
-#
-#     invoke(a.stop, delay=volume_curve[4][0] / speed)
-#     return a
-
+            for offset in (0,-2,2):
+                n = scale_changer.note_offset(n) + (12*instrument.octave)
+                a = Audio('sine.wav', loop=True, pitch=pow(1 / 1.05946309436, -n+offset), volume=1.0, autoplay=False)
+                invoke(a.play, delay=delay)
+                a.fade_out(delay=delay+duration, duration=.2)
 
 
 app.run()
+
+'''
+sclang
+FoxDot.start
+0.exit
+'''
 
 '''
 name: across destiny
