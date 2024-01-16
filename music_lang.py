@@ -86,24 +86,36 @@ class Audio2:
 def dynamics(str, duration=1, min=0, max=1):
     return 1
 
+BPM = 60
+
 instruments = []
 notes = 'zxcvbnmasdfghjklqwertyuiop1234567890'
 class Instrument:
-    def __init__(self, note_pattern, octave=0, offset=0, speed=1, loops=1, dynamics=None, fade=.2, name='unititled'):
+    def __init__(self, note_pattern, octave=0, offset=0, chord_shape=(0,-2,2), chord_delays=None,
+            volume=.5, speed=1, loops=1, dynamics=None, sus=0, fade=.2, name='unititled', sample='square_440hz',
+            ):
+
         if not dynamics:
             dynamics = [1,]
+        self.sample = sample
         self.note_pattern = note_pattern
         self.octave = octave
         self.speed = speed
         self.dynamics = dynamics
         self.loops = loops
         self.name = name
+        self.sus = sus
         self.fade = fade
         self.offset = offset
+        self.volume = volume
+
+        self.chord_shape = chord_shape
+        self.chord_delays = chord_delays
         instruments.append(self)
 
         self.notes = []
         self.is_chord = []
+
         self.durations = []
         for char in self.note_pattern:
             if char.lower() in notes:
@@ -123,114 +135,79 @@ class Instrument:
 
 
 
-def play_note(note, instrument='sine', volume=1, falloff=.5, chord=(0,), octave=0):
+def play_note(note, sample='square_440hz', volume=1, sus=0, falloff=1/2, chord=(0,), chord_delays=None, octave=0):
     print('note in:', note, 'chord:', chord)
-    for chord_offset in chord:
+    if chord_delays is None:
+        chord_delays = [0 for e in chord]
+    elif isinstance(chord_delays, (float, int)):
+        chord_delays = [i*chord_delays for i in range(len(chord))]
+
+
+    for i, chord_offset in enumerate(chord):
         n = note + chord_offset
         print('play note:', n, chord_offset)
         n = scale_changer.note_offset(n) + (12*octave)
-        a = Audio2('sine', loop=True, pitch=pow(1 / 1.05946309436, -n+24), volume=volume)
-        a.fade_out(duration=falloff)
+        # a = Audio2('sine', loop=True, pitch=pow(1 / 1.05946309436, -n+24), volume=volume)
+        a = Audio(sample, loop=True, pitch=pow(1 / 1.05946309436, -n+24), volume=volume, autoplay=False)
+        note_delay = chord_delays[i] * 1
+        invoke(a.play, delay=note_delay)
+        print('sus', note_delay+sus)
+        a.fade_out(duration=falloff, delay=note_delay+sus)
 
 
-from ursina.prefabs.ursfx import ursfx
-# piano = Instrument('adgjlkjg ', octave=-2, speed=4, loops=4)
-# piano = Instrument('xvbmxvmxvmxvbmxvbmxvbmxvbmxvbmzcvnzcvnzcvnzcvnzcvnzcvnzcvnzcvn', octave=2, speed=9.25, loops=4, fade=.25, offset=-0)
-piano = Instrument('GDFSDAMS', octave=0, speed=2, loops=4, fade=.5, offset=-0)
-# piano = Instrument('hgfdgfds', octave=-3, speed=2, loops=4)
+# application.time.scale =
+def play_all():
+    for i, instrument in enumerate(instruments):
+        for loop in range(instrument.loops):
+            cum_time = 0
+            for (note, dur) in zip(instrument.notes, instrument.durations):
+                # print('--', n ,dur)
+                if not note:
+                    continue
 
-scale_changer.pattern = scale_changer.patterns['hexadiatonic']
-BPM = 140
-# scale_changer.scale_rotation = 4
+                delay = (1+( (cum_time + (loop * sum(instrument.durations))) /instrument.speed))
+                duration = 1/8 * dur
+                cum_time += dur
 
-for i, instrument in enumerate(instruments):
-    for loop in range(instrument.loops):
-        cum_time = 0
-        for (note, dur) in zip(instrument.notes, instrument.durations):
-            # print('--', n ,dur)
-            if not note:
-                continue
+                chord = (0, )
+                if instrument.is_chord[i]:
+                    chord = instrument.chord_shape
+                # Text(text='', )
 
-            delay = (1+( (cum_time + (loop * sum(instrument.durations))) /instrument.speed)) * 1
-            duration = 1/8 * dur
-            cum_time += dur
+                balance = ((cum_time%2)-.5)*2
 
-            chord = (0, )
-            if instrument.is_chord[i]:
-                chord = (0,-2,2)
-            # Text(text='', )
-
-            balance = ((cum_time%2)-.5)*2
-
-            note += instrument.offset
-            invoke(play_note, note, falloff=instrument.fade, octave=instrument.octave, chord=chord, delay=delay)
+                note += instrument.offset
+                invoke(play_note, note, sample=instrument.sample, falloff=instrument.fade, octave=instrument.octave, volume=instrument.volume,
+                    chord=chord, chord_delays=instrument.chord_delays, sus=instrument.sus, delay=delay)
 
 
 
 def input(key):
-    if key in notes:
+    if not held_keys['control'] and key in notes:
         n = notes.index(key)
         # n = scale_changer.note_offset(n)
         chord = (0,)
         if held_keys['shift']:
             chord = (0,-2,2)
 
-        play_note(n, chord=chord)
+        play_note(n, chord=chord, chord_delays=0, sample='square_440hz', sus=1/4, volume=.5)
+
+    if held_keys['control']:
+        if key == '1':
+            application.time_scale = 1
+        elif key == '2':
+            application.time_scale = .5
+
+application.time_scale = 1
+# piano = Instrument('adgjlkjg ', octave=-2, speed=4, loops=4)
+# piano = Instrument('xvbmxvmxvmxvbmxvbmxvbmxvbmxvbmzcvnzcvnzcvnzcvnzcvnzcvnzcvnzcvn', octave=2, speed=9.25, loops=4, fade=.25, offset=-0)
+piano = Instrument('GDFSDAMS', octave=0, speed=1, loops=4, fade=1/4, offset=-0, chord_delays=1/32, volume=.5, sus=3/4)
+# piano = Instrument('GDFSDAMS', octave=0, speed=1, loops=4, fade=1/2, offset=-0, chord_delays=1/32, volume=.1, sample='noise')
+# piano = Instrument('hgfdgfds'.upper(), octave=1, speed=2, loops=4, chord_delays=1/16, chord_shape=(0,2,4,6))
+
+scale_changer.pattern = scale_changer.patterns['hexadiatonic']
+# scale_changer.scale_rotation = 4
+
+play_all()
 
 app.run()
-
-'''
-sclang
-FoxDot.start
-0.exit
-'''
-
-'''
-name: across destiny
-
-drums:
-    delay:
-    speed:---
-    scale:pentatonic
-    melody = '1---2- 3---4-'
-    after 3 loops: speed += 1
-        after 1: fade_speed(speed-1)
-    after 8 loops: fade_out(duration=2 loops)
-    every 2 loop:
-        play drums_2 for 1 loop
-
-
-drums_2:
-    pattern= "_^*^_^*^_^*^"
-    dynamic: pattern='__..--^^--..__', duration=1L, range(.5,1)
-
-main_melody:
-    # delay: drums_2.end
-    "etuopout"-3O
-
-pattern = § |sfh wdf |
-
-
-PIANO
-§ |sfh wdf | -4O -2 X3
-~ |__..--^^--..__| _=.5,
-% -.5
-
-PIANO_2
-§ pattern -2O X1/4
-~ |__..--^^--..__| _=.5,
-% -.5
-
-BASS
-§ |[adg][sfh]| -5o x1/8
-
-
-'rtyuiuyt'
-'w---wry-, y---yri-, e----etu-, y-y-yte-'
-layout:
-
-fadein:        |---..__
-main melody:   |    ------------....____    _.--------
-drums:         |-------------------------------    -----------------    |
-bass:          |--------------------.__.-^^^-
-'''
