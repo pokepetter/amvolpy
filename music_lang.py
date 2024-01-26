@@ -250,7 +250,7 @@ if __name__ == '__main__':
     # piano = Instrument('adgjlkjg ', octave=-2, speed=4, loops=4)
     # piano = Instrument('xvbmxvmxvmxvbmxvbmxvbmxvbmxvbmzcvnzcvnzcvnzcvnzcvnzcvnzcvnzcvn', octave=2, speed=9.25, loops=4, fade=.25)
     # piano = Instrument('HD', sample='sine', octave=2, speed=1, loops=4, attack=.5, fade=.5, volume=.5, sus=.5, time_scale=4)
-    scale_changer.pattern = scale_changer.patterns['hexadiatonic']
+    scale_changer.pattern = scale_changer.patterns['phrygian dominant']
     piano = Instrument('GDFSDAMS', octave=0, speed=1, loops=4, fade=1/4, chord_delays=1/32, volume=.5, sus=.75, attack=0)
     piano = Instrument('HD', sample='noise', octave=2, speed=1, loops=4, attack=.5, fade=.5, volume=.2, sus=.5, time_scale=4)
     piano = Instrument('qwertyuiop1234567654321poiuytrew', octave=-1, speed=8, loops=8, fade=1/16, chord_delays=1/32, volume=.2, sus=.2, attack=.025)
