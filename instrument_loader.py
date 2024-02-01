@@ -1,3 +1,4 @@
+import glob
 from ursina import application
 
 
@@ -35,13 +36,13 @@ def load_instrument(name):
         for e in get_tags(f.stem, '[', ']'):
             if e.startswith('n'):
                 note_num = int(e[1:])
-                samples[note_num] = str(f.resolve())[len(str(application.asset_folder)):][1:]
+                samples[note_num] = glob.escape(f.stem)
 
     # print(samples)
     new_samples = [e for e in samples]
     for i, s in enumerate(samples):
         if s != None:
-            new_samples[i] = (loader.loadSfx(samples[i]), 1)
+            new_samples[i] = (samples[i], 1)
 
         else:
             a = 999
@@ -64,7 +65,7 @@ def load_instrument(name):
             if dist == b:
                 dist = -dist
 
-            new_samples[i] = (loader.loadSfx(samples[i+dist]), pow(1 / 1.05946309436, dist))
+            new_samples[i] = (samples[i+dist], pow(1 / 1.05946309436, dist))
             # new_samples[i] = (samples[i+dist], dist))
 
     # print(new_samples)

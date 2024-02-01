@@ -70,7 +70,12 @@ class Instrument:
 
         print(self.notes, 'ischord:', self.is_chord, self.durations)
 
-
+from instrument_loader import load_instrument
+samples_and_pitches, attack, falloff, loop_samples = load_instrument('uoiowa_piano')
+# self.sounds = [Audio(e[0], loop=self.loop_samples, pitch=e[1], volume=0, is_playing=False) for e in self.samples_and_pitches]
+# samples, attack, falloff, loop_samples = load_instrument('uoiowa_piano')
+for e in samples_and_pitches:
+    print(e[0], 'pitch:', e[1])
 
 def play_note(note, sample='square_440hz', volume=1, attack=0, sus=0, falloff=1/2, chord=(0,), chord_delays=None, octave=0):
     # print('note in:', note, 'chord:', chord)
@@ -85,7 +90,10 @@ def play_note(note, sample='square_440hz', volume=1, attack=0, sus=0, falloff=1/
         # print('play note:', n, chord_offset)
         n = scale_changer.note_offset(n) + (12*octave)
         # a = Audio2('sine', loop=True, pitch=pow(1 / 1.05946309436, -n+24), volume=volume)
-        a = Audio(sample, loop=True, pitch=pow(1 / 1.05946309436, -n+24), volume=volume, autoplay=False)
+        # a = Audio(sample, loop=True, pitch=pow(1 / 1.05946309436, -n+24), volume=volume, autoplay=False)
+        # print('play note:', n, 'len samples:', (len(samples)))
+        sample, pitch = samples_and_pitches[n]
+        a = Audio(sample, pitch=pitch, volume=1)
         note_delay = chord_delays[i] * 1
 
         invoke(a.play, delay=note_delay)
@@ -124,8 +132,14 @@ def play_all():
 
 
 def input(key):
-    if not held_keys['control'] and key in notes:
-        n = notes.index(key)
+    if not held_keys['control'] and key in notes or key in ',.-':
+        if key not in ',.-':
+            n = notes.index(key)
+        else:
+            print('random')
+            if key == ',':  n = notes.index(random.choice('zxcvbnm'))
+            if key == '.':  n = notes.index(random.choice('asdfghjkl'))
+            if key == '-':  n = notes.index(random.choice('qwertyuiop'))
         # n = scale_changer.note_offset(n)
         chord = (0,)
         if held_keys['shift']:
@@ -135,14 +149,15 @@ def input(key):
         print('play:', n)
         if held_keys['shift']:
             chord = (0,-2,2)
-            play_note(n, chord=chord, sus=1/4, volume=.5, chord_delays=1/32)
-            play_note(n-2, chord=chord, sus=1/4, volume=.2, chord_delays=1/16)
+            play_note(n, chord=chord, sus=1/4, volume=.5, falloff=1, chord_delays=1/32)
+            # play_note(n-2, chord=chord, sus=1/4, volume=.2, chord_delays=1/16)    # extra harmony
         else:
             play_note(n, chord=chord, chord_delays=1/16, sus=1/16, volume=.5)
         # rand = Instrument(random_melody.upper(), octave=1, speed=1, loops=4, fade=1/16, chord_delays=1/32, volume=.05, sus=1, attack=0, offset=2)
 
         # rand = Instrument(random_melody.upper(), octave=1, speed=1, loops=4, fade=1/16, chord_delays=1/32, volume=.5, sus=1, attack=0)
         # rand = Instrument(random_melody.upper(), octave=1, speed=1, loops=4, fade=1/16, chord_delays=1/32, volume=.05, sus=1, attack=0, offset=2)
+
 
     if held_keys['control']:
         if key == '1':
@@ -152,7 +167,6 @@ def input(key):
 
     if key == 'space':
         invoke(play_all, delay=.5)
-
 
 
 
