@@ -24,6 +24,8 @@ class ScaleChanger(Entity):
             'minor pentatonic' : (3,2,2,3,2),
             'major pentatonic' : (2,2,3,2,3),
             'ritsusen' : (2,3,2,2,3),
+
+            'phrygian dominant' : (1,3,1,2,1,2,2),
             }
         # self.pattern = (2, 2, 1, 2, 2, 3)
         # self.pattern = (1,)*12
