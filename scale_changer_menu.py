@@ -117,13 +117,13 @@ class ScaleChangerMenu(Entity):
         # print(scale_changer.final_offsets)
 
 
+# if __name__ == '__main__':
+
+# sys.modules[__name__] = ScaleChangerMenu()
+
+
 if __name__ == '__main__':
     app = Ursina()
-
-sys.modules[__name__] = ScaleChangerMenu()
-
-
-if __name__ == '__main__':
     import style
     # import keyboard
     t = time.time()
