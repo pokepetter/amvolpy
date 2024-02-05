@@ -1,5 +1,5 @@
 from ursina import *
-app = Ursina(borderless=False, size=Vec2(1920,1080))
+app = Ursina(borderless=False)
 
 import scale_changer
 
@@ -75,7 +75,7 @@ class NoteSection:
 from instrument_loader import load_instrument
 
 instruments = dict()
-for instr in ('uoiowa_piano', 'uoiowa_guitar', 'sine'):
+for instr in ('uoiowa_piano', 'uoiowa_guitar', 'sine', 'drum'):
     samples_and_pitches, attack, falloff, loop_samples = load_instrument(instr)
     instruments[instr] = samples_and_pitches
 # samples_and_pitches, attack, falloff, loop_samples = load_note_section('uoiowa_guitar')
@@ -83,7 +83,6 @@ for instr in ('uoiowa_piano', 'uoiowa_guitar', 'sine'):
 # samples, attack, falloff, loop_samples = load_note_section('uoiowa_piano')
 # for e in samples_and_pitches:
 #     print(e[0], 'pitch:', e[1])
-
 def play_note(note, instrument='uoiowa_piano', volume=1, attack=0, sus=0, falloff=1/2, chord=(0,), chord_delays=None, octave=0):
     # print('note in:', note, 'chord:', chord)
     if chord_delays is None:
@@ -137,6 +136,8 @@ def play_all():
                     chord=chord, chord_delays=note_section.chord_delays, sus=note_section.sus*note_section.time_scale, delay=note_section.delay+(delay*note_section.time_scale))
 
 
+# real time note section
+rtns = Empty(instrument='uoiowa_piano', volume=.5, attack=0, sus=1/16, falloff=1, chord=(0,), chord_delays=1/32, octave=0)
 
 def input(key):
     if not held_keys['control'] and key in notes or key in ',.-':
@@ -161,10 +162,10 @@ def input(key):
         print('play:', n, 'oct:', _oct, _extra)
         if held_keys['shift']:
             chord = (0,-2,2)
-            play_note(n, chord=chord, sus=1/4, volume=.5, falloff=1, chord_delays=1/32)
+            # play_note(n, chord=chord, sus=1/4, volume=.5, falloff=1, chord_delays=1/32)
             # play_note(n-2, chord=chord, sus=1/4, volume=.2, chord_delays=1/16)    # extra harmony
-        else:
-            play_note(n, chord=chord, chord_delays=1/16, sus=1/16, volume=.5)
+        # else:
+        play_note(n, instrument=rtns.instrument, chord=chord, volume=rtns.volume, attack=rtns.attack, sus=rtns.sus, falloff=rtns.falloff, chord_delays=rtns.chord_delays, octave=rtns.octave)
         # rand = NoteSection(random_melody.upper(), octave=1, speed=1, loops=4, fade=1/16, chord_delays=1/32, volume=.05, sus=1, attack=0, offset=2)
 
         # rand = NoteSection(random_melody.upper(), octave=1, speed=1, loops=4, fade=1/16, chord_delays=1/32, volume=.5, sus=1, attack=0)
@@ -272,6 +273,7 @@ def input(key):
 from scale_changer_menu import ScaleChangerMenu
 scale_changer_menu = ScaleChangerMenu()
 
+instrument_picker = ButtonList({key : Func(setattr, rtns, 'instrument', key) for key in instruments.keys()})
 # ursfx([(0.0, 1.0), (0.09, 0.5), (0.25, 0.5), (0.31, 0.5), (1.0, 0.0)], volume=1.0, wave='sine', pitch=-24, speed=2.2)
 # class UrsfxSynth:
 
@@ -297,6 +299,7 @@ if __name__ == '__main__':
     # piano = NoteSection('hgfdgfds'.upper(), octave=1, speed=2, loops=4, chord_delays=1/16, chord_shape=(0,2,4,6))
     # for e in note_sections:
     #     e.offset = -2
+
 
     # scale_changer.scale_rotation = 4
     app.run()
