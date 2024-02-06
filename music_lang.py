@@ -75,7 +75,7 @@ class NoteSection:
 from instrument_loader import load_instrument
 
 instruments = dict()
-for instr in ('uoiowa_piano', 'uoiowa_guitar', 'sine', 'drum'):
+for instr in ('uoiowa_piano', 'uoiowa_guitar', 'sine', 'drum', 'noise'):
     samples_and_pitches, attack, falloff, loop_samples = load_instrument(instr)
     instruments[instr] = samples_and_pitches
 # samples_and_pitches, attack, falloff, loop_samples = load_note_section('uoiowa_guitar')
@@ -83,17 +83,64 @@ for instr in ('uoiowa_piano', 'uoiowa_guitar', 'sine', 'drum'):
 # samples, attack, falloff, loop_samples = load_note_section('uoiowa_piano')
 # for e in samples_and_pitches:
 #     print(e[0], 'pitch:', e[1])
-def play_note(note, instrument='uoiowa_piano', volume=1, attack=0, sus=0, falloff=1/2, chord=(0,), chord_delays=None, octave=0):
+SYNTHS = []
+
+
+class Synth:
+    def __init__(self, name='default_synth', sample='uoiowa_piano', volume=.5, attack=0, sus=0, falloff=1/2, chord_shape=(0,-2,2), chord_delays=None, pan=0):
+        # these are just default for new synth, you don't usually need them
+        self.sample = sample
+        self.samples_and_pitches, attack, falloff, loop_samples = load_instrument(sample)
+        self.volume = volume
+        self.attack = attack
+        self.sus = sus
+        self.falloff = falloff
+        self.pan = pan
+        self.chord_shape = chord_shape
+        self.chord_delays = chord_delays
+        if chord_delays is None:
+            self.chord_delays = [0 for e in chord_shape]
+        elif isinstance(chord_delays, (float, int)):
+            self.chord_delays = [i*chord_delays for i in range(len(chord_shape))]
+
+        SYNTHS.append(self)
+
+    def play(self, n, sample=Default, volume=Default, attack=Default, sus=Default, falloff=Default, octave=0):
+        if sample == Default:   sample = self.sample
+        if volume == Default:   volume = self.volume
+        if attack == Default:   attack = self.attack
+        if sus ==    Default:   sus = self.sus
+        if falloff ==Default:   falloff = self.falloff
+
+        n = scale_changer.note_offset(n) + (12*octave)
+        sample, pitch = self.samples_and_pitches[n]
+        a = Audio(sample, pitch=pitch, volume=0, autoplay=False)
+        print('-----------', sample, pitch, volume, a)
+        a.play()
+        a.animate('volume', volume, duration=attack, curve=curve.linear)
+        # a.animate('volume', 0, duration=falloff, delay=sus, curve=curve.linear)
+        # destroy(a, delay=sus+falloff)
+
+    def play_chord(self, n):
+        for i, note_offset in enumerate(self.chord_shape):
+            note_delay = self.chord_delays[i] * 1
+            invoke(self.play, n+note_offset, delay=note_delay)
+
+piano = Synth('piano', sample='uoiowa_piano')
+ambient_piano = Synth('ambient_piano', sample='uoiowa_piano', falloff=2)
+
+
+def play_note(note, instrument='uoiowa_piano', volume=1, attack=0, sus=0, falloff=1/2, chord_shape=(0,), chord_delays=None, octave=0, pan=0):
     # print('note in:', note, 'chord:', chord)
     if chord_delays is None:
-        chord_delays = [0 for e in chord]
+        chord_delays = [0 for e in chord_shape]
     elif isinstance(chord_delays, (float, int)):
-        chord_delays = [i*chord_delays for i in range(len(chord))]
+        chord_delays = [i*chord_delays for i in range(len(chord_shape))]
 
 
-    for i, chord_offset in enumerate(chord):
-        n = note + chord_offset
-        # print('play note:', n, chord_offset)
+    for i, note_offset in enumerate(chord_shape):
+        n = note + note_offset
+        # print('play note:', n, chord_shape)
         n = scale_changer.note_offset(n) + (12*octave)
         # a = Audio2('sine', loop=True, pitch=pow(1 / 1.05946309436, -n+24), volume=volume)
         # a = Audio(sample, loop=True, pitch=pow(1 / 1.05946309436, -n+24), volume=volume, autoplay=False)
@@ -124,20 +171,20 @@ def play_all():
                 duration = 1/8 * dur
                 cum_time += dur
 
-                chord = (0, )
+                chord_shape = (0, )
                 if note_section.is_chord[j]:
-                    chord = note_section.chord_shape
+                    chord_shape = note_section.chord_shape
                 # Text(text='', )
 
                 balance = ((cum_time%2)-.5)*2
 
                 note += note_section.offset
                 invoke(play_note, note, instrument=note_section.instrument, attack=note_section.attack*note_section.time_scale, falloff=note_section.fade*note_section.time_scale, octave=note_section.octave, volume=note_section.volume,
-                    chord=chord, chord_delays=note_section.chord_delays, sus=note_section.sus*note_section.time_scale, delay=note_section.delay+(delay*note_section.time_scale))
+                    chord_shape=chord, chord_delays=note_section.chord_delays, sus=note_section.sus*note_section.time_scale, delay=note_section.delay+(delay*note_section.time_scale))
 
 
 # real time note section
-rtns = Empty(instrument='uoiowa_piano', volume=.5, attack=0, sus=1/16, falloff=1, chord=(0,), chord_delays=1/32, octave=0)
+rtns = Empty(instrument='uoiowa_piano', volume=.5, attack=0, sus=1/16, falloff=1, chord_shape=(0,), chord_delays=1/32, octave=0)
 
 def input(key):
     if not held_keys['control'] and key in notes or key in ',.-':
@@ -152,20 +199,22 @@ def input(key):
             print_on_screen(random_key)
             n = notes.index(random_key)
         # n = scale_changer.note_offset(n)
-        chord = (0,)
+        chord_shape = (0,)
         if held_keys['shift']:
-            chord = (0,-2,2)
+            chord_shape = (0,-2,2)
             # chord = (0,1,2,4,5,7)
 
         _oct = floor(n / 12)
         _extra = n - (_oct*12)
         print('play:', n, 'oct:', _oct, _extra)
         if held_keys['shift']:
-            chord = (0,-2,2)
+            piano.play_chord(n)
+            # chord_shape = (0,-2,2)
             # play_note(n, chord=chord, sus=1/4, volume=.5, falloff=1, chord_delays=1/32)
             # play_note(n-2, chord=chord, sus=1/4, volume=.2, chord_delays=1/16)    # extra harmony
         # else:
-        play_note(n, instrument=rtns.instrument, chord=chord, volume=rtns.volume, attack=rtns.attack, sus=rtns.sus, falloff=rtns.falloff, chord_delays=rtns.chord_delays, octave=rtns.octave)
+        # play_note(n, instrument=rtns.instrument, chord_shape=chord_shape, volume=rtns.volume, attack=rtns.attack, sus=rtns.sus, falloff=rtns.falloff, chord_delays=rtns.chord_delays, octave=rtns.octave)
+        piano.play(n)
         # rand = NoteSection(random_melody.upper(), octave=1, speed=1, loops=4, fade=1/16, chord_delays=1/32, volume=.05, sus=1, attack=0, offset=2)
 
         # rand = NoteSection(random_melody.upper(), octave=1, speed=1, loops=4, fade=1/16, chord_delays=1/32, volume=.5, sus=1, attack=0)
@@ -279,13 +328,13 @@ instrument_picker = ButtonList({key : Func(setattr, rtns, 'instrument', key) for
 
 if __name__ == '__main__':
     # application.time_scale = 30/60
-    # piano = NoteSection('adgjlkjg ', octave=-2, speed=4, loops=4)
-    # piano = NoteSection('xvbmxvmxvmxvbmxvbmxvbmxvbmxvbmzcvnzcvnzcvnzcvnzcvnzcvnzcvnzcvn', octave=2, speed=9.25, loops=4, fade=.25)
-    # piano = NoteSection('HD', sample='sine', octave=2, speed=1, loops=4, attack=.5, fade=.5, volume=.5, sus=.5, time_scale=4)
+    # melody = NoteSection('adgjlkjg ', octave=-2, speed=4, loops=4)
+    # melody = NoteSection('xvbmxvmxvmxvbmxvbmxvbmxvbmxvbmzcvnzcvnzcvnzcvnzcvnzcvnzcvnzcvn', octave=2, speed=9.25, loops=4, fade=.25)
+    # melody = NoteSection('HD', sample='sine', octave=2, speed=1, loops=4, attack=.5, fade=.5, volume=.5, sus=.5, time_scale=4)
     scale_changer.pattern = scale_changer.patterns['phrygian dominant']
-    piano = NoteSection('GDFSDAMS', octave=0, speed=1, loops=4, fade=1/4, chord_delays=1/32, volume=.5, sus=.75, attack=0)
-    piano = NoteSection('HD', octave=2, speed=1, loops=4, attack=.5, fade=.5, volume=.2, sus=.5, time_scale=4)
-    piano = NoteSection('qwertyuiop1234567654321poiuytrew', octave=-1, speed=8, loops=8, fade=1/16, chord_delays=1/32, volume=.2, sus=.2, attack=.025)
+    melody = NoteSection('GDFSDAMS', octave=0, speed=1, loops=4, fade=1/4, chord_delays=1/32, volume=.5, sus=.75, attack=0)
+    melody = NoteSection('HD', octave=2, speed=1, loops=4, attack=.5, fade=.5, volume=.2, sus=.5, time_scale=4)
+    melody = NoteSection('qwertyuiop1234567654321poiuytrew', octave=-1, speed=8, loops=8, fade=1/16, chord_delays=1/32, volume=.2, sus=.2, attack=.025)
 
     random.seed(4)
     some_notes = 'GDFSDAMS ----'.lower()
@@ -295,8 +344,8 @@ if __name__ == '__main__':
     random.seed(7)
     random_melody_2 = ''.join([random.choice(some_notes) for i in range(16)])
     rand_2 = NoteSection(random_melody_2, octave=3, speed=2, loops=1, fade=1/4, chord_delays=1/32, volume=.4, sus=.75, attack=.05, delay=16)
-    # piano = NoteSection('GDFSDAMS', octave=0, speed=1, loops=4, fade=1/2, chord_delays=1/32, volume=.1, instrument='noise')
-    # piano = NoteSection('hgfdgfds'.upper(), octave=1, speed=2, loops=4, chord_delays=1/16, chord_shape=(0,2,4,6))
+    # melody = NoteSection('GDFSDAMS', octave=0, speed=1, loops=4, fade=1/2, chord_delays=1/32, volume=.1, instrument='noise')
+    # melody = NoteSection('hgfdgfds'.upper(), octave=1, speed=2, loops=4, chord_delays=1/16, chord_shape=(0,2,4,6))
     # for e in note_sections:
     #     e.offset = -2
 

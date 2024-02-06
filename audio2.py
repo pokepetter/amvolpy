@@ -75,7 +75,7 @@ if __name__ == '__main__':
     from ursina import *
     app = Ursina()
 
-    a = Audio2('sine', loop=True, balance=-.5)
+    a = Audio2('noise', loop=True, balance=-.5)
     pan_slider = Slider(min=-.5, max=.5, default=0, dynamic=True, setattr=(a,'balance'))
 
     app.run()
