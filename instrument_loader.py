@@ -17,26 +17,32 @@ def load_instrument(name):
     samples = [None, ] * 128
     attack, falloff, loop_samples = .05, .5, False
     files = list(application.asset_folder.glob(f'**/{name}*'))
+    files = [e for e in files if not e.stem.endswith('_left') and not e.stem.endswith('_right')]
     # print('-----------files:', files)
     if len(files) == 0:
         print('instrument', name, 'not found')
         return None
 
-    for e in get_tags(files[0].stem, '[', ']'):
-        if e.startswith('a'):
-            attack = int(e[1:])
-            print('set attack to:', e[1:])
-        if e.startswith('f'):
-            print('set falloff to:', int(e[1:]) / 1000)
-            falloff = int(e[1:]) / 1000
-        if e == 'loop':
-            loop_samples = True
-
     for f in files:
-        for e in get_tags(f.stem, '[', ']'):
-            if e.startswith('n'):
-                note_num = int(e[1:])
-                samples[note_num] = glob.escape(f.stem)
+        for word in f.stem.split('_'):
+            if word.startswith('n'):
+                note_num = int(word[1:])
+                samples[note_num] = f.stem
+
+            if word.startswith('a'):
+                attack = int(word[1:])
+                print('set attack to:', word[1:])
+            if word.startswith('f'):
+                print('set falloff to:', int(word[1:]) / 1000)
+                falloff = int(word[1:]) / 1000
+            if word == 'loop':
+                loop_samples = True
+
+    # for f in files:
+    #     for e in get_tags(f.stem, '[', ']'):
+    #         if e.startswith('n'):
+    #             note_num = int(e[1:])
+    #             samples[note_num] = glob.escape(f.stem)
 
     # print(samples)
     new_samples = [e for e in samples]
@@ -87,5 +93,6 @@ if __name__ == '__main__':
     print(time.time() - t)
     i = load_instrument('uoiowa_piano')
     for e in i:
-        print(e)
+        for _ in e:
+            print(_)
     app.run()

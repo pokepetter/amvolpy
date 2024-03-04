@@ -21,8 +21,8 @@ NoteSection('werty-oiu-iuy---werty-oiu-i-y---', instrument='uoiowa_guitar', octa
 NoteSection('g-gkg-gkf-fkf-fk', instrument='uoiowa_guitar', octave=0, speed=4, loops=8, chord_delays=0, volume=.3, sus=.1, attack=0, fade=1/4)
 NoteSection('g-gkg-gkf-fkf-fk', octave=-1, speed=4, loops=32, chord_delays=0, volume=.3, sus=.1, attack=0, fade=1/4)
 NoteSection('xa', instrument='drum', octave=0, speed=2, loops=32, chord_delays=0, volume=.3, sus=.2, attack=0, fade=1/4)
-NoteSection('ggg---jf--s-h-k-', instrument='drum', octave=2, speed=8, loops=32, chord_delays=0, volume=.1, sus=.1, attack=0, fade=1/4)
-NoteSection('x---a---x-x-a---', instrument='drum', octave=0, speed=2, loops=32, chord_delays=0, volume=.3, sus=.2, attack=0, fade=1/4)
+# NoteSection('ggg---jf--s-h-k-', instrument='drum', octave=1, speed=8, loops=32, chord_delays=0, volume=.1, sus=.3, attack=0, fade=1/4)
+# NoteSection('x---a---x-x-a---', instrument='drum', octave=0, speed=2, loops=32, chord_delays=0, volume=.3, sus=.2, attack=0, fade=1/4)
 
 # rand = NoteSection('ggg---jf--s-h-k--ga-fg sh', instrument='drum', octave=2, speed=8, loops=8, chord_delays=0, volume=.1, sus=.1, attack=0, fade=1/4)
 # rand = NoteSection(' x', instrument='drum', octave=2, speed=4, loops=8, chord_delays=0, volume=.3, sus=.1, attack=0, fade=1/4)
