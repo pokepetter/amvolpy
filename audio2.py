@@ -4,7 +4,7 @@ from ursina.scripts.property_generator import generate_properties_for_class
 @generate_properties_for_class()
 class Audio2(Entity):
     def __init__(self, sound_file_name='', left_sound='', right_sound='', autoplay=True, auto_destroy=False,
-        loop=False, volume=1, pitch=1, balance=0, spread=0):
+        loop=False, volume=1, pitch=1, balance=0, spread=.1):
         super().__init__()
         # if sound_file_name:
         #     self.left_sound = Audio(f'{sound_file_name}', volume=volume/2)
@@ -48,7 +48,7 @@ class Audio2(Entity):
     def volume_setter(self, value):
         self._volume = value
         pan = self.balance + .5
-        print('-----------set volume to:', value, pan)
+        # print('-----------set volume to:', value, pan)
         self.right_sound.volume = lerp(0, .5, pan) * self._volume
         self.left_sound.volume = lerp(.5, 0, pan) * self._volume
         # self.balance = self.balance

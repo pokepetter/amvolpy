@@ -16,11 +16,11 @@ print('aaaaaaaaaa', random_melody)
 
 scale_changer.pattern = scale_changer.patterns['phrygian dominant']
 application.time_scale = 45/60
-NoteSection('werty-oiu-iuy---werty-oiu-i-y---', instrument='uoiowa_guitar', octave=1, speed=4, loops=4, chord_delays=0, volume=.3, sus=.5, attack=0, fade=1/2)
+NoteSection('werty-oiu-iuy---werty-oiu-i-y---', instrument='uoiowa_guitar', octave=1, speed=4, loops=4, chord_delays=0, volume=.3, sus=.5, attack=0, falloff=1/2)
 NoteSection('werty-oiu-iuy---werty-oiu-i-y---', instrument='uoiowa_guitar', octave=0, speed=4, loops=4, chord_delays=0, volume=.5, sus=.5, attack=0)
-NoteSection('g-gkg-gkf-fkf-fk', instrument='uoiowa_guitar', octave=0, speed=4, loops=8, chord_delays=0, volume=.3, sus=.1, attack=0, fade=1/4)
-NoteSection('g-gkg-gkf-fkf-fk', octave=-1, speed=4, loops=32, chord_delays=0, volume=.3, sus=.1, attack=0, fade=1/4)
-NoteSection('xa', instrument='drum', octave=0, speed=2, loops=32, chord_delays=0, volume=.3, sus=.2, attack=0, fade=1/4)
+NoteSection('g-gkg-gkf-fkf-fk', instrument='uoiowa_guitar', octave=0, speed=4, loops=8, chord_delays=0, volume=.3, sus=.1, attack=0, falloff=1/4)
+NoteSection('g-gkg-gkf-fkf-fk', octave=-1, speed=4, loops=32, chord_delays=0, volume=.3, sus=.1, attack=0, falloff=1/4)
+NoteSection('xa', instrument='drum', octave=0, speed=2, loops=32, chord_delays=0, volume=.3, sus=.2, attack=0, falloff=1/4)
 # NoteSection('ggg---jf--s-h-k-', instrument='drum', octave=1, speed=8, loops=32, chord_delays=0, volume=.1, sus=.3, attack=0, fade=1/4)
 # NoteSection('x---a---x-x-a---', instrument='drum', octave=0, speed=2, loops=32, chord_delays=0, volume=.3, sus=.2, attack=0, fade=1/4)
 
