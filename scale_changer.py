@@ -27,6 +27,8 @@ class ScaleChanger(Entity):
 
             'phrygian dominant' : (1,3,1,2,1,2,2),
             }
+
+        self.patterns['tony anderson - fields of green - hepta-6'] = (self.patterns['heptatonic'], 6, 0)
         # self.pattern = (2, 2, 1, 2, 2, 3)
         # self.pattern = (1,)*12
         self.pattern = (2,1,2,2,2,1,2)
@@ -49,14 +51,6 @@ class ScaleChanger(Entity):
             cumulative += e
             self.final_offsets.append(cumulative)
 
-
-    @property
-    def base_note_offset(self):
-        return self._base_note_offset
-
-    @base_note_offset.setter
-    def base_note_offset(self, value):
-        self._base_note_offset = value
 
     @property
     def scale_rotation(self):

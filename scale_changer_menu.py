@@ -6,36 +6,33 @@ Button.default_model = 'quad'
 
 class ScaleChangerMenu(Entity):
     def __init__(self, **kwargs):
-        super().__init__(
-            parent = camera.ui,
-            position=(.4,-.4, -2),
-            color=color.orange,
-            )
+        super().__init__(parent=camera.ui, position=(.4,-.4,-2), color=color.orange)
+
+        self.presets = {
+            'tony anderson - fields of green - hepta-6' : (scale_changer.patterns['heptatonic'], 6, 0),
+        }
 
         for key, value in kwargs.items():
             setattr(self, key ,value)
 
-
-
+        self.menu = Entity(parent=self, enabled=False)
         self.toggle_button = Button(text='scle\ncngr', model='quad', scale=.05, position=(.5,-.45, -2))
 
         def toggle_enabled():
             if not self.children:
                 t = time.time()
-                self.create()
+                # self.create()
                 print('creation time:', time.time() - t)
                 return
-
-            for c in self.children:
-                c.enabled = not c.enabled
+            self.menu.enabled = not self.menu.enabled
+            # for c in self.children:
+            #     c.enabled = not c.enabled
         self.toggle_button.on_click = toggle_enabled
 
-
-    def create(self):
         self.button_group = ButtonGroup(
-            parent = self,
+            parent=self.menu,
             # options = [str(e).replace(',', '')[1:-1] for e in self.patterns],
-            options = scale_changer.patterns.keys(),
+            options=scale_changer.patterns.keys(),
             )
 
         for i, e in enumerate(self.button_group.buttons):
@@ -46,7 +43,7 @@ class ScaleChangerMenu(Entity):
             e.pattern = scale_changer.patterns[e.text_entity.text]
 
 
-        self.keyboard_graphic = Entity(parent=self, scale=.025)
+        self.keyboard_graphic = Entity(parent=self.menu, scale=.025)
         self.keyboard_graphic.x = (self.button_group.buttons[0].scale_x * Text.size) + .0125
         self.keyboard_graphic.y = (self.button_group.buttons[0].scale_x * Text.size)
         new_x = 0
@@ -64,7 +61,7 @@ class ScaleChangerMenu(Entity):
 
             e.x = new_x
 
-        self.start_note_slider = Slider(0, 12, step=1, parent=self, scale=.5, height=Text.size*2)
+        self.start_note_slider = Slider(0, 12, step=1, parent=self.menu, scale=.5, height=Text.size*2, text='start note')
         self.start_note_slider.bg.tooltip = tooltip=Tooltip('base note offset')
         self.start_note_slider.x = self.keyboard_graphic.x + .0125/2
         self.start_note_slider.y = (self.button_group.buttons[0].scale_x * Text.size) * 1.25
@@ -74,7 +71,7 @@ class ScaleChangerMenu(Entity):
             self.visualize_scale()
         self.start_note_slider.on_value_changed = set_base_note_offset
 
-        self.scale_rotation_slider = Slider(0, 12, step=1, parent=self, scale=.5, height=Text.size*2)
+        self.scale_rotation_slider = Slider(0, 12, step=1, parent=self.menu, scale=.5, height=Text.size*2, text='scale rotation')
         self.scale_rotation_slider.bg.tooltip = tooltip=Tooltip('scale rotation')
         self.scale_rotation_slider.x = self.keyboard_graphic.x + .0125/2
         self.scale_rotation_slider.y = (self.button_group.buttons[0].scale_x * Text.size) * 1.75
@@ -86,8 +83,18 @@ class ScaleChangerMenu(Entity):
 
         self.visualize_scale()
 
+        self.preset_menu = ButtonList({key: Func(self.apply_preset, value) for key, value in self.presets.items()}, parent=self.menu, x=-.75)
 
 
+
+
+    def apply_preset(self, value):
+        pattern, start_note, rotation = value
+        scale_changer.pattern = pattern
+        self.start_note_slider.value = start_note
+        # self.start_note_slider.on_value_changed()
+        self.scale_rotation_slider.value = rotation
+        # self.visualize_scale()
 
 
     def input(self, key):
@@ -128,7 +135,7 @@ if __name__ == '__main__':
     # import keyboard
     t = time.time()
     # base.scale_changer = ScaleChanger()
-    # base.scale_changer_menu = ScaleChangerMenu()
+    base.scale_changer_menu = ScaleChangerMenu()
     # base.keyboard = Keyboard()
     print('---', time.time() - t)
     app.run()

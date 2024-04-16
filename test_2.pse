@@ -1,0 +1,32 @@
+{
+    "sounds": [
+        null,
+        null,
+        null,
+        null
+    ],
+    "positions": [
+        [
+            -0.5,
+            -0.1
+        ],
+        [
+            -0.452,
+            -0.175
+        ],
+        [
+            -0.415,
+            -0.25
+        ],
+        [
+            -0.5,
+            -0.325
+        ]
+    ],
+    "muted": [
+        false,
+        false,
+        false,
+        false
+    ]
+}
