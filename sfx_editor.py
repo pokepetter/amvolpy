@@ -141,6 +141,37 @@ def load_file(path):
     CURRENT_PATH = path
 
 
+def export():
+    from pydub import AudioSegment
+    from pydub.playback import play
+    from pathlib import Path
+    import glob
+    path = Audio('sine.wav', autoplay=False).path
+    # print('-------------', path)
+    sound = AudioSegment.from_file(path)
+    clip_duration_in_milliseconds = len(sound)
+    print('-------------clip_duration_in_milliseconds', clip_duration_in_milliseconds)
+    beginning = sound[:5000]
+
+    # clip.fade()
+
+    target_ursfx_gui = BLOCKS[0].gui
+
+    print('-------------', target_ursfx_gui.volume_curve)
+    for i in range(1, len(target_ursfx_gui.volume_curve)):
+        start = target_ursfx_gui.volume_curve[i-1]
+        end = target_ursfx_gui.volume_curve[i]
+        duration = end[0] - start[0]
+        print(start[0], end[0], 'duration:', duration)
+
+
+
+
+if __name__ == '__main__':
+    export()
+
+
+
 # camera.orthographic = True
 # camera.fov = 15
 # camera.x = 10
