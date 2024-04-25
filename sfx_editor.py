@@ -146,26 +146,40 @@ def export():
     from pydub.playback import play
     from pathlib import Path
     import glob
-    path = Audio('sine.wav', autoplay=False).path
-    # print('-------------', path)
-    sound = AudioSegment.from_file(path)
-    clip_duration_in_milliseconds = len(sound)
-    print('-------------clip_duration_in_milliseconds', clip_duration_in_milliseconds)
-    beginning = sound[:5000]
 
-    # clip.fade()
+    # for each part
 
     target_ursfx_gui = BLOCKS[0].gui
+    speed = target_ursfx_gui.speed_slider.value
+    path = Audio(target_ursfx_gui.wave_selector.value, autoplay=False).path
+    print('-------------', path)
+    sound_clip = AudioSegment.from_file(path)
+    clip_duration_ms = len(sound_clip)
+    print('-------------clip_duration_ms', clip_duration_ms)
+    block_duration_ms = int(target_ursfx_gui.volume_curve[4][0] * speed * 1000)
+    print('block_duration_ms:', block_duration_ms)
+    print('num clip copies to fit whole block:', clip_duration_ms/block_duration_ms)
+    clip = sound_clip[:block_duration_ms]
 
-    print('-------------', target_ursfx_gui.volume_curve)
+    # print('-------------', target_ursfx_gui.volume_curve)
+    silent = -120
+
     for i in range(1, len(target_ursfx_gui.volume_curve)):
-        start = target_ursfx_gui.volume_curve[i-1]
-        end = target_ursfx_gui.volume_curve[i]
-        duration = end[0] - start[0]
-        print(start[0], end[0], 'duration:', duration)
+        # in ms
+        start_time = int(target_ursfx_gui.volume_curve[i-1][0] * speed * 1000)
+        end_time = int(target_ursfx_gui.volume_curve[i][0] * speed * 1000)
 
+        start_volume = target_ursfx_gui.volume_curve[i-1][1] * target_ursfx_gui.volume_slider.value
+        end_volume = target_ursfx_gui.volume_curve[i][1] * target_ursfx_gui.volume_slider.value
 
+        duration = end_time - start_time
 
+        print(start_time, end_time, 'volume:', start_volume, '->', end_volume, 'duration:', duration, )
+
+        clip.fade(from_gain=lerp(silent,0,start_volume), to_gain=lerp(silent,0,end_volume), start=start_time, duration=duration)
+    print(clip)
+    with open('test_export.wav', 'wb') as f:
+        clip.export(f, format='wav')
 
 if __name__ == '__main__':
     load_file(Path('.') / 'reflect.pse')
