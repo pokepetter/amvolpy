@@ -168,6 +168,7 @@ def export():
 
 
 if __name__ == '__main__':
+    load_file(Path('.') / 'reflect.pse')
     export()
 
 
@@ -175,5 +176,5 @@ if __name__ == '__main__':
 # camera.orthographic = True
 # camera.fov = 15
 # camera.x = 10
-EditorCamera()
+# EditorCamera()
 app.run()
