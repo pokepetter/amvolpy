@@ -21,7 +21,7 @@ scale_changer.base_note_offset = 6
 rand = NoteSection('[qet][qet][qet][eyi][eyi][eyi][ruo][ruo][ruo][wrt][wrt][wrt]', octave=-1, speed=4, loops=4, chord_delays=.01, volume=1, attack=0, instrument='alternating_piano')
 # rand = NoteSection('[qet][qet][qet][eyi][eyi][eyi][ruo][ruo][ruo][wrt][wrt][wrt]', octave=-1, speed=4, loops=4, chord_shape=(0,2,4,7,9,11,9,7,5,3,1,3,5,7,6,2), chord_delays=.01, volume=1, sus=1, attack=0, instrument='alternating_piano')
 print(rand.note_pattern)
-application.time_scale = 30/60
+application.time_scale = 20/60
 # NoteSection('werty-oiu-iuy---werty-oiu-i-y---', instrument='uoiowa_guitar', octave=1, speed=4, loops=4, chord_delays=0, volume=.3, sus=.5, attack=0, falloff=1/2)
 # NoteSection('werty-oiu-iuy---werty-oiu-i-y---', instrument='uoiowa_guitar', octave=0, speed=4, loops=4, chord_delays=0, volume=.5, sus=.5, attack=0)
 # NoteSection('g-gkg-gkf-fkf-fk', instrument='uoiowa_guitar', octave=0, speed=4, loops=8, chord_delays=0, volume=.3, sus=.1, attack=0, falloff=1/4)

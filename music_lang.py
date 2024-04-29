@@ -184,7 +184,7 @@ class NoteSection:
                 self.is_chord.append(char.isupper())
                 self.durations.append(1)
 
-            elif char == '-':
+            elif char == '-' and self.durations:
                 self.durations[-1] += 1
 
             elif char == ' ':
@@ -192,7 +192,7 @@ class NoteSection:
                 self.is_chord.append(False)
                 self.durations.append(1)
 
-        # print(self.notes, 'ischord:', self.is_chord, 'durations:', self.durations)
+        print(self.notes, 'ischord:', self.is_chord, 'durations:', self.durations)
 
 
 
@@ -218,7 +218,7 @@ def play_all():
                 # loop_time_offset = sum(note_section.durations) / note_section.speed
                 # absolute_time = loop_time_offset + local_time_inside_loop
                 # print(absolute_time)
-                absolute_time += dur
+
 
                 # delay = (loop * sum(note_section.durations) / note_section.speed) + dur
                 # delay += cum_time
@@ -257,7 +257,7 @@ def play_all():
                         delay=note_section.delay+(absolute_time*note_section.time_scale/note_section.speed), pan=pan, spread=spread)
                 # invoke(play_note, note, instrument=note_section.instrument, attack=note_section.attack*note_section.time_scale, falloff=note_section.falloff*note_section.time_scale, octave=note_section.octave, volume=note_section.volume,
                 #     chord_shape=chord_shape, chord_delays=note_section.chord_delays, sus=note_section.sus*note_section.time_scale, delay=note_section.delay+(delay*note_section.time_scale))
-
+                absolute_time += dur
 
 
 def input(key):
