@@ -15,17 +15,17 @@ def create_panned_sounds(input_file):
     audio_left = audio.pan(-1)  # pan left
     audio_right = audio.pan(1)  # pan right
 
-    audio_left.export(f'{input_file.parent / 'generated' / input_file.stem}_left.ogg', format='ogg')
-    audio_right.export(f'{input_file.parent / 'generated' / input_file.stem}_right.ogg', format='ogg')
+    audio_left.export(f'samples/generated/{input_file.stem}_left.ogg', format='ogg')
+    audio_right.export(f'samples/generated/{input_file.stem}_right.ogg', format='ogg')
     print('done')
 
 if __name__ == '__main__':
     # print('----', glob.escape('uoiowa_piano*.*'))
     # for file in Path('samples').glob(glob.escape('uoiowa_piano[n*].wav')):
-    names = ('uoiowa_piano', 'uoiowa_guitar', 'drum')
+    names = ('uoiowa_piano', 'uoiowa_guitar', 'drum', 'tagelharpa_pizz_horse_pulse_', 'VlnEnsHarm_n72')
     # pattern = pattern.replace('[','[[]').replace(']','[]]')
     for name in names:
-        for file in Path('samples/').glob(f'{name}*.*'):
+        for file in Path('.').glob(f'**/{name}*.*'):
             if file.stem.endswith('_left') or file.stem.endswith('_right'):
                 continue
             print('ddd', file)

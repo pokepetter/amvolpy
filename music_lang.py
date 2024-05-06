@@ -4,7 +4,7 @@ from instrument_loader import load_instrument
 
 app = Ursina(borderless=False)
 window.exit_button.enabled = False
-
+Text.default_font = 'VeraMono.ttf'
 import scale_changer
 
 # pattern = § |sfh wdf |
@@ -108,6 +108,11 @@ class PannedPiano(Synth):
         # print('-----ffffffff', self.falloff)
         super().play(note=note, volume=volume, attack=attack, length=length, sus=sus, falloff=falloff, octave=octave, pan=pan, spread=spread)
 
+class RandomPan(Synth):
+    def play(self, note, volume=None, attack=None, length=1, sus=0, falloff=None, octave=0, pan=0, spread=None):
+        pan = random.uniform(-.5,.5)
+        super().play(note=note, volume=volume, attack=attack, length=length, sus=sus, falloff=falloff, octave=octave, pan=pan, spread=spread)
+
 # default instrments
 unique_instrument_names = set([path.stem.split('_n')[0] for path in Path('samples/').glob('*.*') if '_n' in path.stem])
 default_synths = [Synth(name=name, sample=name) for name in unique_instrument_names]
@@ -116,6 +121,7 @@ default_synths = [Synth(name=name, sample=name) for name in unique_instrument_na
 uoiowa_piano = Synth(name='piano', sample='uoiowa_piano', falloff=.1)
 panned_piano = PannedPiano(name='panned_piano', sample='uoiowa_piano', falloff=5)
 alternating_piano = AlternatingPiano(name='alternating_piano', sample='uoiowa_piano', falloff=5)
+random_pan_tagelharpa = RandomPan(name='random_pan_tagelharpa', sample='tagelharpa_pizz_horse_pulse', falloff=5)
 my_violin = PannedPiano(name='my_violin', sample='violin', attack=0, falloff=.5)
 # ambient_piano = Synth(name='ambient_piano', sample='uoiowa_piano', falloff=2)
 
@@ -199,8 +205,10 @@ class NoteSection:
 # real time note section
 rtns = Empty(instrument=panned_piano, volume=.5, chord_delays=0, octave=0)
 
-
+PLAYING = False
 def play_all():
+    global PLAYING
+    PLAYING = True
     print('play all')
     for i, note_section in enumerate(note_sections):
         absolute_time = note_section.delay
@@ -283,9 +291,9 @@ def input(key):
         # print('play:', n, 'oct:', _oct, _extra)
 
         if held_keys['shift']:
-            rtns.instrument.play_chord(note)
+            rtns.instrument.play_chord(note, volume=rtns.volume)
         else:
-            rtns.instrument.play(note)
+            rtns.instrument.play(note, volume=rtns.volume)
 
 
     if held_keys['control']:
@@ -300,13 +308,64 @@ def input(key):
     if held_keys['control'] and held_keys['shift'] and held_keys['alt'] and key == 'q':
         application.quit()
 
+renderer = Text(position=window.left, scale=.75)
+def render_note_sections():
+    pass
+    renderer.text = 'notes:\n'
+    for i, note_section in enumerate(note_sections):
+        line = f'{note_section.instrument.name : <30}'
+        line += ' ' * int(note_section.delay*1)
+        # absolute_time = note_section.delay
 
+        for loop in range(note_section.loops):
+            for j, n in enumerate(note_section.notes):
+                line += notes[n]
+                waits = (note_section.durations[j]*8) - 1
+                # if note_section.speed == .5:
+                #     waits += 2
+                line += '-' * waits
+                # if note_section.speed
+
+            # line += ''.join([notes[n] for n in note_section.notes])
+            # local_time_inside_loop = 0
+            # for j, (note, dur) in enumerate(zip(note_section.notes, note_section.durations)):
+            #     # print('--', note, dur)
+            #     if not note:
+            #         continue
+            #     note += note_section.offset
+        renderer.text += f'{line}\n'
+    print('----------------', renderer.text)
+W = Text.get_width(' ')
+class Timeline(Entity):
+    def __init__(self):
+        super().__init__()
+        self.knob = Entity(model='circle', color=color.azure, parent=renderer, origin_y=-.5, origin_x=-.5, scale=Text.size, x=30*W)
+        self.t = 0
+        self.started = False
+
+    def update(self):
+        if not PLAYING:
+            return
+
+        # self.t += time.dt
+        # self.knob.x = (30*W) + self.t * W * 8
+        if not self.started:
+            self.started = True
+            invoke(self.step, delay=1/8)
+
+    def step(self):
+        self.knob.x += W
+        invoke(self.step, delay=1/8)
+
+Timeline()
 from scale_changer_menu import ScaleChangerMenu
 scale_changer_menu = ScaleChangerMenu()
 
 instrument_picker = ButtonList({key : Func(setattr, rtns, 'instrument', value) for key, value in SYNTHS.items()})
 # ursfx([(0.0, 1.0), (0.09, 0.5), (0.25, 0.5), (0.31, 0.5), (1.0, 0.0)], volume=1.0, wave='sine', pitch=-24, speed=2.2)
 # class UrsfxSynth:
+
+volume_slider = Slider(label='volume', setattr=(rtns, 'volume'), dynamic=True)
 
 if __name__ == '__main__':
     # application.time_scale = 30/60
@@ -332,4 +391,6 @@ if __name__ == '__main__':
     # for e in note_sections:
     #     e.offset = -2
     # scale_changer.scale_rotation = 4
+    render_note_sections()
+
     app.run()
