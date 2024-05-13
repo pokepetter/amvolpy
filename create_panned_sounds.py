@@ -22,7 +22,7 @@ def create_panned_sounds(input_file):
 if __name__ == '__main__':
     # print('----', glob.escape('uoiowa_piano*.*'))
     # for file in Path('samples').glob(glob.escape('uoiowa_piano[n*].wav')):
-    names = ('uoiowa_piano', 'uoiowa_guitar', 'drum', 'tagelharpa_pizz_horse_pulse_', 'VlnEnsHarm_n72')
+    names = ('uoiowa_piano', 'uoiowa_guitar', 'drum', 'tagelharpa_pizz_horse_pulse_', 'VlnEnsHarm_n72', 'square_')
     # pattern = pattern.replace('[','[[]').replace(']','[]]')
     for name in names:
         for file in Path('.').glob(f'**/{name}*.*'):

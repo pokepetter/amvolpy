@@ -8,7 +8,7 @@ app = Ursina(borderless=False)
 from ursina.prefabs import ursfx
 from ursina.prefabs.ursfx import UrsfxGUI
 window.color = color._8
-guis = [UrsfxGUI(enabled=True, x=(-.5*window.aspect_ratio)+.2+(i*.36), y=.15, z=-1, scale=.75) for i in range(5)]
+guis = [UrsfxGUI(enabled=True, play_after_change=False, x=(-.5*window.aspect_ratio)+.2+(i*.36), y=.15, z=-1, scale=.75) for i in range(5)]
 for i, e in enumerate(guis):
     e.background_panel.color = hsv(i*60, .5,.2,1)
 
@@ -178,10 +178,14 @@ def export():
 
         clip.fade(from_gain=lerp(silent,0,start_volume), to_gain=lerp(silent,0,end_volume), start=start_time, duration=duration)
     print(clip)
-    with open('test_export.wav', 'wb') as f:
-        clip.export(f, format='wav')
+    play(clip)
+    # with open('test_export.wav', 'wb') as f:
+    #     clip.export(f, format='wav')
 
 if __name__ == '__main__':
+    pass
+    # for e in guis:
+    #     e.play()
     load_file(Path('.') / 'reflect.pse')
     export()
 
